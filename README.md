@@ -35,6 +35,21 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## The upstream pull requests
+
+Eleven are open against `cordiverse/cordis`. They apply cleanly in any order — no
+two touch the same lines — and together they run green:
+
+```
+upstream/main       25 files   248 tests
+all eleven stacked  34 files   264 tests   all passing
+```
+
+The stacked diff is on the fork as `all-prs-stacked`, as a convenience for
+reviewing them as a batch rather than as a dependency between them. The
+no-conflict claim was checked by cherry-picking all eleven, commit by commit, onto
+a clean `upstream/main`.
+
 ## Where the gaps actually are
 
 The nine items above all come from a **narrow window — August and September
