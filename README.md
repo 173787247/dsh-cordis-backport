@@ -52,6 +52,18 @@ reviewing them as a batch rather than as a dependency between them. The
 no-conflict claim was checked by cherry-picking all eleven, commit by commit, onto
 a clean `upstream/main`.
 
+## What the audit could not see
+
+Every finding here came from comparing commits, and that has a blind spot: **the
+defects I found myself were never checked against the vendored line.** It is
+pinned at upstream `56b3d4f` (2026-07-15), so a defect in code unchanged since is
+present in both — and a defect present in both is invisible to a commit-diff
+audit by construction.
+
+Checking my fourteen upstream PRs against it turned up four more:
+`#165`, `#166`, `#167` and `#172` **all apply here too**. See
+[`my-prs-vs-dsh.md`](my-prs-vs-dsh.md).
+
 ## One that runs the other way
 
 Not every divergence here is a fix upstream has and this line lacks. The
