@@ -18,13 +18,14 @@ their own trade-offs.
 What follows from that is the thing this repository is about: **upstream has fixed
 bugs that the vendored line still has**, in code DSH runs every day.
 
-## The six, each reproduced
+## The seven, each reproduced
 
 Every row was confirmed with one probe run against the shipped packages and against
 upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes/`](probes).
 
 | upstream | where | before → after |
 |---|---|---|
+| [`752dbee`](https://github.com/cordiverse/cordis/commit/752dbee) (#40) | `cordis/src/fiber.ts` | `plugin()` returns an `Object.create(fiber)` wrapper; writing lifecycle fields through `this` shadowed the real fiber's, so after a config update the wrapper and the fiber disagreed — the wrapper kept reporting `ACTIVE` after unload |
 | [`2ceea23`](https://github.com/cordiverse/cordis/commit/2ceea23) (#109) | `cordis/src/fiber.ts` | `Fiber.update()` returned `undefined`; a dropped call produced `unhandledRejection: 'boom'` → returns the task, rejects to an awaiter, nothing leaks |
 | [`1b7d0f2`](https://github.com/cordiverse/cordis/commit/1b7d0f2) | `loader/src/config/{entry,group,isolate}.ts` | a new child entry had no fiber when `await loader.update()` resolved → reconciled by then |
 | [`5b195b3`](https://github.com/cordiverse/cordis/commit/5b195b3) (#44) | `cordis/src/events.ts` | a listener reaching `next()` twice ran the chain again silently → throws `next() called multiple times` |
@@ -89,9 +90,13 @@ caller. That is where the await chain actually breaks. With only `entry.ts` and
 
 **"Added lines not found here" does not mean "fix missing".** Both tracks have been
 refactored. A line-matching pass over the upstream log flagged twelve commits as
-absent; checking them one at a time, half were the same feature written differently
-(`be7d36e` #37, `752dbee` #40). Only behaviour counts, which is why every item above
-has a probe rather than a diff.
+absent; checking them one at a time, several were the same feature written
+differently (`be7d36e` #37). **One of those calls was wrong:** `752dbee` (#40) was
+marked present because the identifiers it touches all exist here, but what it
+changes is the *receiver* of an assignment — `this.assertActive()` becomes
+`const fiber = this.ctx.fiber; fiber.assertActive()` — so nothing name-based can
+see it. It was found by fuzzing instead, and it is the seventh item above. The
+correction is written up in [`backport/README.md`](backport/README.md).
 
 Not included, deliberately:
 

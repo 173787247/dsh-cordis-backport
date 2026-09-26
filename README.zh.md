@@ -12,12 +12,13 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 
 由此带来一个后果，也是本仓库的主题：**上游修过的一些 bug，vendor 这条线里还在**，而这些代码 DSH 每天都在跑。
 
-## 六条，每条都复现过
+## 七条，每条都复现过
 
 每一行都用**同一份探针**在 vendor 包和上游 `cordis@4.0.0-rc.10` 上各跑一次得到，除此之外没有任何其他改动。探针在 [`probes/`](probes)。
 
 | 上游 | 位置 | 补丁前 → 补丁后 |
 |---|---|---|
+| [`752dbee`](https://github.com/cordiverse/cordis/commit/752dbee) (#40) | `cordis/src/fiber.ts` | `plugin()` 返回的是 `Object.create(fiber)` wrapper；通过 `this` 写生命周期字段会在 **wrapper 上多出一份**，遮蔽真 fiber 的那份——配置更新后两者分叉，卸载后 wrapper 仍报 `ACTIVE` |
 | [`2ceea23`](https://github.com/cordiverse/cordis/commit/2ceea23) (#109) | `cordis/src/fiber.ts` | `Fiber.update()` 返回 `undefined`；被丢弃时产生 `unhandledRejection: 'boom'` → 返回 task，可被 await 捕获，不再泄漏 |
 | [`1b7d0f2`](https://github.com/cordiverse/cordis/commit/1b7d0f2) | `loader/src/config/{entry,group,isolate}.ts` | `await loader.update()` 返回时新子条目**还没有 fiber** → 返回时已协调完毕 |
 | [`5b195b3`](https://github.com/cordiverse/cordis/commit/5b195b3) (#44) | `cordis/src/events.ts` | 监听器二次 `next()` 会**静默**把下游整条链再跑一遍 → 抛 `next() called multiple times` |
@@ -71,7 +72,11 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 
 **②"上游新增的行在本地找不到" ≠ "这个修复缺失"。**
 
-两条线都经历过重构。我第一遍用行匹配扫上游提交日志，跑出**十二个**"基本全缺"；逐个核实后，**有一半只是同一个功能换了个写法**（`be7d36e` #37、`752dbee` #40）。所以这里每条都必须落到**可观测的行为差异**上才算数——这也是为什么每条都配探针，而不是只贴 diff。
+两条线都经历过重构。我第一遍用行匹配扫上游提交日志，跑出**十二个**"基本全缺"；逐个核实后，有几个只是同一个功能换了个写法（`be7d36e` #37）。
+
+**但其中一条我判错了：** `752dbee`（#40）被我标成"已有"，因为它涉及的标识符在本地全都能找到。**可它改的是赋值的*接收者***——`this.assertActive()` 变成 `const fiber = this.ctx.fiber; fiber.assertActive()`——**任何基于名字的检查都看不见。**
+
+它最后是**靠模糊测试**找出来的，就是上面第七条。更正说明写在 [`backport/README.md`](backport/README.md)。所以这里每条都必须落到**可观测的行为差异**上才算数——这也是为什么每条都配探针，而不是只贴 diff。
 
 **刻意没有包含的：**
 

@@ -55,7 +55,7 @@ when registration succeeds.
 Both are the same lesson as `../README.md`'s: an assertion firing is not a bug,
 and the reachability argument has to come before the report.
 
-## 06: cached state goes stale after an update — confirmed, root cause not
+## 06: cached state goes stale after an update — root cause found
 
 `06-stale-state-after-update.mjs` is not a fuzzer; it is the reduction of one.
 
@@ -81,14 +81,44 @@ worth writing down even unfinished:
 A fiber that believes it is active after being unloaded may keep providing a
 service it no longer owns.
 
-**What is not done: the root cause.** I reduced it to the `update()` but did not
-find the assignment that skips `_updateState()`. Ruled out along the way: the
-`if (this.inertia) return` early exit in `_setEpoch` (inertia is `undefined` by
-then), and `_reload()`'s catch (which would have set `_error`, and `_getState()`
-reports `PENDING`, not `FAILED`). The epoch is `INACTIVE` and the field is
-`ACTIVE`, so something set the epoch on a path that does not refresh the field.
+**Root cause.** `registry.plugin()` hands callers a wrapper:
 
-Until that is pinned down this is a symptom report, not a patch.
+```ts
+const fiber = new Fiber(...)
+const wrapped = Object.create(fiber) as Fiber & PromiseLike<Fiber>
+```
+
+The real fiber is the wrapper's *prototype*. `update()` and `restart()` then did
+`this.assertActive()`, `this._config = config`, `this.config = config`,
+`this._error = undefined`, and every `this.state = ...` underneath them — all
+through the wrapper, which creates **own** copies of those fields and shadows the
+real fiber's. `reflect.notify()` iterates `runtime.fibers`, which holds the real
+fiber, so afterwards the two copies diverge. `Object.getOwnPropertyNames` tells
+the whole story:
+
+```
+DSH, after update()     [then, _config, config, _error, inertia, state, store]
+upstream, after update() [then]
+```
+
+Upstream fixed exactly this in
+[`752dbee`](https://github.com/cordiverse/cordis/commit/752dbee) (#40, *keep
+wrapped fiber state canonical*) by dereferencing at the top of both methods:
+
+```ts
+const fiber = this.ctx.fiber
+fiber.assertActive()
+```
+
+and its tests assert the wrapper stays clean — `Object.hasOwn(fiber, 'state')`
+must be `false`. The fix is in
+[`../backport/cordis-4.0.4.patch`](../backport/cordis-4.0.4.patch); with it
+applied the wrapper keeps only `[then]` and both copies agree.
+
+Worth noting how this was missed the first time: an earlier pass had classified
+`752dbee` as *present, different shape*, because every identifier it touches
+exists in the vendored line. It changes the **receiver** of an assignment, and no
+name-based check can see that. Fuzzing found what the diff could not.
 
 ## An open discrepancy, not a finding
 

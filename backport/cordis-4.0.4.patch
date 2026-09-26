@@ -1,5 +1,5 @@
 diff --git a/cordis/lib/index.js b/cordis/lib/index.js
-index 8f198c0..3fa6676 100644
+index 8f198c0..4b15fe1 100644
 --- a/cordis/lib/index.js
 +++ b/cordis/lib/index.js
 @@ -227,7 +227,7 @@ function isBailed(value) {
@@ -45,15 +45,51 @@ index 8f198c0..3fa6676 100644
  			}
  		});
  		return self;
-@@ -1434,11 +1443,15 @@ var Fiber = class {
+@@ -1408,10 +1417,11 @@ var Fiber = class {
+ 	* @throws {CordisError} `INACTIVE_EFFECT` when the fiber is already disposed.
+ 	*/
+ 	async restart() {
+-		this.assertActive();
+-		this._setEpoch(INACTIVE);
+-		this._refresh();
+-		await this.await();
++		const fiber = this.ctx.fiber;
++		fiber.assertActive();
++		fiber._setEpoch(INACTIVE);
++		fiber._refresh();
++		await fiber.await();
+ 	}
+ 	/**
+ 	* Validate and apply new config, then restart the plugin.
+@@ -1425,20 +1435,25 @@ var Fiber = class {
+ 	* @throws {ValidationError} when the new config fails validation.
+ 	*/
+ 	update(config, noSave = false) {
+-		this.assertActive();
+-		this._config = config;
+-		if (this.state !== 2) {
+-			this._error = void 0;
+-			this._setEpoch(INACTIVE);
+-			this._refresh();
++		const fiber = this.ctx.fiber;
++		fiber.assertActive();
++		fiber._config = config;
++		if (fiber.state !== 2) {
++			fiber._error = void 0;
++			fiber._setEpoch(INACTIVE);
++			fiber._refresh();
  			return;
  		}
- 		config = this._resolveConfig(config);
+-		config = this._resolveConfig(config);
 -		this.context.waterfall(this, "internal/update", config, noSave, () => {
-+		const result = this.context.waterfall(this, "internal/update", config, noSave, () => {
- 			this.config = config;
- 			this._error = void 0;
- 			return this.restart();
+-			this.config = config;
+-			this._error = void 0;
+-			return this.restart();
++		config = fiber._resolveConfig(config);
++		const result = fiber.context.waterfall(fiber, "internal/update", config, noSave, () => {
++			fiber.config = config;
++			fiber._error = void 0;
++			return fiber.restart();
  		});
 +		if (result === void 0) return;
 +		const task = Promise.resolve(result);
@@ -102,18 +138,60 @@ index c7bf426..5e02f43 100644
  
    /**
 diff --git a/cordis/src/fiber.ts b/cordis/src/fiber.ts
-index 6bb1caa..e02ab33 100644
+index 6bb1caa..c8543c5 100644
 --- a/cordis/src/fiber.ts
 +++ b/cordis/src/fiber.ts
-@@ -745,10 +745,18 @@ export class Fiber {
+@@ -716,10 +716,11 @@ export class Fiber {
+    * @throws {CordisError} `INACTIVE_EFFECT` when the fiber is already disposed.
+    */
+   async restart() {
+-    this.assertActive()
+-    this._setEpoch(INACTIVE)
+-    this._refresh()
+-    await this.await()
++    const fiber = this.ctx.fiber
++    fiber.assertActive()
++    fiber._setEpoch(INACTIVE)
++    fiber._refresh()
++    await fiber.await()
+   }
+ 
+   /**
+@@ -734,21 +735,34 @@ export class Fiber {
+    * @throws {ValidationError} when the new config fails validation.
+    */
+   update(config: any, noSave = false) {
+-    this.assertActive()
+-    this._config = config
+-    if (this.state !== FiberState.ACTIVE) {
++    // `plugin()` returns an `Object.create(fiber)` wrapper, so a method reached
++    // through it has `this` bound to the wrapper. Assigning the lifecycle fields
++    // through `this` would put a second copy on the wrapper and shadow the one
++    // the loader and reflect keep updating.
++    const fiber = this.ctx.fiber
++    fiber.assertActive()
++    fiber._config = config
++    if (fiber.state !== FiberState.ACTIVE) {
+       // Config resolution may access injected services, so defer it until the
+       // fiber can activate.
+-      this._error = undefined
+-      this._setEpoch(INACTIVE)
+-      this._refresh()
++      fiber._error = undefined
++      fiber._setEpoch(INACTIVE)
++      fiber._refresh()
        return
      }
-     config = this._resolveConfig(config)
+-    config = this._resolveConfig(config)
 -    this.context.waterfall(this, 'internal/update', config, noSave, () => {
-+    const result = this.context.waterfall(this, 'internal/update', config, noSave, () => {
-       this.config = config
-       this._error = undefined
-       return this.restart()
+-      this.config = config
+-      this._error = undefined
+-      return this.restart()
++    config = fiber._resolveConfig(config)
++    const result = fiber.context.waterfall(fiber, 'internal/update', config, noSave, () => {
++      fiber.config = config
++      fiber._error = undefined
++      return fiber.restart()
      })
 +    // a listener may veto the restart, in which case there is nothing to await
 +    if (result === undefined) return

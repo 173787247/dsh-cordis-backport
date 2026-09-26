@@ -2,12 +2,12 @@
 
 **English** | [中文](README.zh.md)
 
-Six upstream fixes the vendored cordis line has not taken, as patches against
+Seven upstream fixes the vendored cordis line has not taken, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 
 | patch | package | hunks |
 |---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 8 |
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 10 |
 | `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 13 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
@@ -20,6 +20,7 @@ rebuild. `lib` is esbuild output, unminified — readable and hand-editable.
 
 | upstream | file | before → after |
 |---|---|---|
+| `752dbee` (#40) | `cordis/src/fiber.ts` | `plugin()` returns an `Object.create(fiber)` wrapper; assigning lifecycle fields through `this` put a **second copy on the wrapper**, shadowing the real fiber's — a later dependency withdrawal then updates only one of them → wrapper keeps reading `ACTIVE` after the fiber unloaded |
 | `2ceea23` (#109) | `cordis/src/fiber.ts` | `update()` returned `undefined`; dropped, it produced `unhandledRejection: 'boom'` → returns the task, rejects to an awaiter, nothing leaks |
 | `1b7d0f2` | `cordis-plugin-loader/src/config/{entry,group,isolate}.ts` | a new child entry had no fiber when `await loader.update()` resolved → reconciled by then |
 | `5b195b3` (#44) | `cordis/src/events.ts` | downstream ran 3 times silently → runs 2 and throws `next() called multiple times` |
@@ -46,6 +47,30 @@ caller. **That is where the await chain breaks.**
 
 With only `entry.ts` and `isolate.ts` changed the probe still failed. It passed once
 this went in. Worth knowing for anyone cherry-picking across these two lines.
+
+### A correction to the earlier audit
+
+`752dbee` (#40) was first classified in this repository as *"present, different
+shape"*. **That was wrong**, and the mistake is worth spelling out because of how
+it was made.
+
+The audit checked for the presence of identifiers — `applyTraceable`, `noShadow`,
+`createShadow` — and found them, so the commit was marked as implemented
+differently. What `752dbee` actually changes is the *receiver* of an assignment:
+`this.assertActive()` becomes `const fiber = this.ctx.fiber; fiber.assertActive()`.
+No new identifier appears anywhere, so a name-based check cannot see it.
+
+It was found later by fuzzing, not by reading: a fiber's cached `state` went stale
+after a config update, and the reduction ended at `Object.hasOwn(wrapper, 'state')`
+— the exact condition that commit's own test asserts on:
+
+```ts
+expect(Object.hasOwn(fiber, 'state')).to.equal(false)
+expect(Object.hasOwn(fiber, 'inertia')).to.equal(false)
+```
+
+The lesson generalises: for a codebase with a wrapper/prototype indirection,
+"does this identifier exist" says nothing about whether a fix is present.
 
 ## Applying
 
