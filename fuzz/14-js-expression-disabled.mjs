@@ -5,8 +5,7 @@
  *   as shipped  { __jsExpr: 'false' } -> entry.disabled = false   apply ran 1 time
  *
  * `Boolean({...})` is always true, so any `!!js` node in `disabled` disables the
- * entry whatever the expression says. See findings/16-js-disabled.md — the fix
- * for this one is drafted but NOT verified.
+ * entry whatever the expression says. See findings/16-js-disabled.md — fixed upstream in #179.
  */
 import { Context } from '@deepseek-ai/cordis'
 import { Loader, Group } from '@deepseek-ai/cordis-plugin-loader'

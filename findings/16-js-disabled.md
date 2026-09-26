@@ -1,6 +1,6 @@
 # `disabled: !!js` — the expression is never evaluated
 
-**Status: confirmed. Fix drafted, NOT verified.**
+**Status: confirmed and fixed — upstream PR [#179](https://github.com/cordiverse/cordis/pull/179).**
 
 ## The defect
 
@@ -51,9 +51,9 @@ decision; the raw node stays in the options, so write-back keeps the `!!js` form
 Third item from that log to turn out to be an upstream defect rather than a local
 preference, after #176 and #177.
 
-## The draft
+## The fix
 
-Ported from that line, branch `try/js-disabled` in the local checkout, uncommitted:
+Ported from that line:
 
 ```ts
 private _disabledOf(options: EntryOptions): boolean {
@@ -63,9 +63,37 @@ private _disabledOf(options: EntryOptions): boolean {
 }
 ```
 
-plus `isJsExpr` added to the `./utils.ts` import in `packages/loader/src/config/entry.ts`.
+plus `isJsExpr` added to the `./utils.ts` import in
+`packages/loader/src/config/entry.ts`. The raw node stays in the options, so
+write-back keeps the `!!js` form rather than replacing it with the evaluated
+boolean.
 
-**Not verified.** The `yakumo esbuild` command stopped resolving its own plugins partway
-through this session — `yakumo --help` lists only `help` — so the loader bundle could not
-be rebuilt and the probe still exercises the old build. Everything upstream that was
-verified before that point stands; this one does not, and should not be sent until it does.
+```
+before   { __jsExpr: 'false' } -> disabled = true    applied 0 times
+after    { __jsExpr: 'false' } -> disabled = false   applied 1 time
+         { __jsExpr: 'true'  } -> disabled = true    applied 0 times
+```
+
+Full suite 249 passing. The new test in `packages/loader/tests/index.spec.ts`
+fails on `main` with `expected true to equal false`, and the other eight tests in
+the file pass in both runs.
+
+## How long this took, and why
+
+The fix was drafted early and sat unverified for a while because the build
+environment appeared to have broken on its own: `yakumo esbuild` reported
+`command "esbuild" not found`, and `yakumo --help` listed only `help`.
+
+It had not broken on its own. **`yakumo` mounts `yakumo.yml` through this very
+loader**, so a loader bundle left in a broken state — `src` reverted with
+`git checkout`, but `lib/index.js` being an untracked build artifact, still
+carrying the half-applied edit — took the build tool down with it. The `initial`
+fallback in yakumo's bootstrap is `[{ name: 'yakumo' }]`, which is exactly the
+"only `help` is available" symptom.
+
+Two lessons, both already learned elsewhere in this repository and both
+re-learned here:
+
+- reverting `src` is not reverting the build; check what actually runs
+- a tool that stops working at the same moment as the code under test is a
+  suspect, not a coincidence
