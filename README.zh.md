@@ -12,12 +12,13 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 
 由此带来一个后果，也是本仓库的主题：**上游修过的一些 bug，vendor 这条线里还在**，而这些代码 DSH 每天都在跑。
 
-## 十一条，每条都复现过
+## 十二条，每条都复现过
 
 每一行都用**同一份探针**在 vendor 包和上游 `cordis@4.0.0-rc.10` 上各跑一次得到，除此之外没有任何其他改动。探针在 [`probes/`](probes)。
 
 | 上游 | 位置 | 补丁前 → 补丁后 |
 |---|---|---|
+| [`eb5604d`](https://github.com/cordiverse/cordis/commit/eb5604d) (#32) | `cordis/src/logger.ts` | `LoggerLevel` 里 `INFO` 和 `WARN` 顺序反了，而导出器的**默认阈值就是这个 `INFO`**——所以默认级别下 **`ctx.logger.warn()` 被静默丢弃** |
 | [`be7d36e`](https://github.com/cordiverse/cordis/commit/be7d36e) (#37) + [`4cfd19a`](https://github.com/cordiverse/cordis/commit/4cfd19a) | `cordis/src/utils.ts`, `reflect.ts` | 可调用服务的 shadow 丢失，`ctx.foo.bar` 归属错上下文——服务能访问没声明的服务，声明了反而在嵌套上下文访问不到 |
 | [`988df36`](https://github.com/cordiverse/cordis/commit/988df36) (#68) | `cordis/src/context.ts` | 可选属性没加 `| undefined`，开了 `exactOptionalPropertyTypes` 的使用者无法赋 `undefined`——纯类型层，无运行时变化 |
 | [`10194de`](https://github.com/cordiverse/cordis/commit/10194de) (#98) | `cordis/src/fiber.ts` | `FAILED` 的 fiber 在依赖刷新时**重新进入生命周期**——已经抛过错的插件 `apply` 被反复执行 |

@@ -1,5 +1,5 @@
 diff --git a/cordis/lib/index.js b/cordis/lib/index.js
-index 8f198c0..bc92740 100644
+index 8f198c0..91984e8 100644
 --- a/cordis/lib/index.js
 +++ b/cordis/lib/index.js
 @@ -108,11 +108,12 @@ function withProp(target, prop, value) {
@@ -101,6 +101,26 @@ index 8f198c0..bc92740 100644
  	}
  	/**
  	* Store a listener record as an effect on the current fiber.
+@@ -455,8 +465,8 @@ var Logger = class {
+ 		this.service = service;
+ 		Object.assign(this, options);
+ 		this.error = this._method("error", 0);
+-		this.info = this._method("info", 1);
+-		this.warn = this._method("warn", 2);
++		this.warn = this._method("warn", 1);
++		this.info = this._method("info", 2);
+ 		this.debug = this._method("debug", 3);
+ 	}
+ 	_method(type, level) {
+@@ -471,7 +481,7 @@ var Logger = class {
+ 			const sn = ++this.service._snMessage;
+ 			const ts = Date.now();
+ 			for (const exporter of this.service.exporters.values()) {
+-				if ((exporter.levels?.[this.name] ?? exporter.levels?.default ?? this.level ?? 1) < level) continue;
++				if ((exporter.levels?.[this.name] ?? exporter.levels?.default ?? this.level ?? 2) < level) continue;
+ 				const message = {
+ 					sn,
+ 					ts,
 @@ -599,7 +609,9 @@ var LoggerService = class LoggerService {
  			colors: 3,
  			export: (message) => {
@@ -329,9 +349,20 @@ index 6bb1caa..90edef3 100644
    }
  }
 diff --git a/cordis/src/logger.ts b/cordis/src/logger.ts
-index 7038ecc..96d5171 100644
+index 7038ecc..d862a76 100644
 --- a/cordis/src/logger.ts
 +++ b/cordis/src/logger.ts
+@@ -21,8 +21,8 @@ export type Formatter = (value: any, exporter: Exporter, message: Message) => an
+ /** Numeric severity used when exporters decide whether to emit a message. */
+ export const enum LoggerLevel {
+   ERROR = 0,
+-  INFO = 1,
+-  WARN = 2,
++  WARN = 1,
++  INFO = 2,
+   DEBUG = 3,
+ }
+ 
 @@ -214,8 +214,13 @@ export class LoggerService {
        colors: 3,
        export: (message) => {

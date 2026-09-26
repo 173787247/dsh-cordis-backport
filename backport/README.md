@@ -2,12 +2,12 @@
 
 **English** | [中文](README.zh.md)
 
-Eleven upstream fixes the vendored cordis line has not taken, as patches against
+Twelve upstream fixes the vendored cordis line has not taken, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 
 | patch | package | hunks |
 |---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 22 |
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 25 |
 | `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 15 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
@@ -20,6 +20,7 @@ rebuild. `lib` is esbuild output, unminified — readable and hand-editable.
 
 | upstream | file | before → after |
 |---|---|---|
+| `eb5604d` (#32) | `cordis/src/logger.ts` | `LoggerLevel` had `INFO` and `WARN` the wrong way round, and the exporter's default threshold *is* `LoggerLevel.INFO` — so **`ctx.logger.warn()` never reached any exporter at the default level**. Warnings were silently dropped |
 | `be7d36e` (#37) **+** `4cfd19a` | `cordis/src/utils.ts`, `cordis/src/reflect.ts` | a callable service reached through `[Service.extend]()` lost its shadow, and an access through `ctx.foo.bar` was governed by the wrong context — so a service reached a service it never declared, and one that *had* declared it could not reach it from a nested context. Upstream reworked the block across both commits; this is that rework |
 | `988df36` (#68) | `cordis/src/context.ts`, `loader/src/config/entry.ts`, **and the shipped `.d.ts`** | `baseUrl?: string` and `_initTask?: Promise<void>` were not widened to `| undefined`, so a consumer compiling with `exactOptionalPropertyTypes` cannot assign `undefined` to them. This is the one item in the set that changes no runtime behaviour |
 | `10194de` (#98) | `cordis/src/fiber.ts` | a `FAILED` fiber re-entered its lifecycle on a dependency refresh, so a plugin whose `apply` throws had it called again on every withdraw/re-provide — side effects before the throw accumulate while the state stays `FAILED` |

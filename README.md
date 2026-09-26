@@ -18,13 +18,14 @@ their own trade-offs.
 What follows from that is the thing this repository is about: **upstream has fixed
 bugs that the vendored line still has**, in code DSH runs every day.
 
-## The eleven, each reproduced
+## The twelve, each reproduced
 
 Every row was confirmed with one probe run against the shipped packages and against
 upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes/`](probes).
 
 | upstream | where | before → after |
 |---|---|---|
+| [`eb5604d`](https://github.com/cordiverse/cordis/commit/eb5604d) (#32) | `cordis/src/logger.ts` | `INFO` and `WARN` were the wrong way round in `LoggerLevel`, and the exporter default threshold is that same `INFO` — so **`ctx.logger.warn()` was silently dropped** at the default level |
 | [`be7d36e`](https://github.com/cordiverse/cordis/commit/be7d36e) (#37) + [`4cfd19a`](https://github.com/cordiverse/cordis/commit/4cfd19a) | `cordis/src/utils.ts`, `reflect.ts` | callable-service shadows were dropped and `ctx.foo.bar` was governed by the wrong context — a service could reach one it never declared, and one that had declared it could not reach it from a nested context |
 | [`988df36`](https://github.com/cordiverse/cordis/commit/988df36) (#68) | `cordis/src/context.ts` | optional properties left un-widened, so `exactOptionalPropertyTypes` consumers cannot assign `undefined` — type-level only, no runtime change |
 | [`10194de`](https://github.com/cordiverse/cordis/commit/10194de) (#98) | `cordis/src/fiber.ts` | a `FAILED` fiber re-entered its lifecycle on a dependency refresh, re-running a plugin that had already thrown |
@@ -149,7 +150,18 @@ changes is the *receiver* of an assignment — `this.assertActive()` becomes
 see it. It was found by fuzzing instead, and it is the seventh item above. The
 correction is written up in [`backport/README.md`](backport/README.md).
 
-The audit window is fully adjudicated: all sixteen upstream `fix` commits between
+The proper boundary is not a guessed date. DeepSeek Harness publishes its
+vending manifest in
+[`vendor/README.md`](https://github.com/deepseek-ai/deepseek-harness/blob/master/vendor/README.md),
+which pins `cordis` to upstream `56b3d4f` (2026-07-15) and lists **23 local
+modifications** layered on top. That is the real comparison: the pinned snapshot,
+plus those modifications, against what upstream has since. From `56b3d4f` to
+`upstream/main` there are 30 commits, 17 of them `fix` — and all seventeen now
+carry a verdict. An earlier pass here used a self-chosen window instead; the
+manifest is both narrower and correct, and it also explains why the historical
+scan found so much already present: the local modifications are ports.
+
+The window is fully adjudicated: all sixteen upstream `fix` commits between
 2026-08-01 and the head of `upstream/main` carry a verdict — nine backported, two
 confirmed and deliberately unpatched (the shadow gap above), two deliberate
 divergences, one a feature, one not applicable (the `hmr` package is not shipped
