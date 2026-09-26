@@ -6,7 +6,11 @@
  *   as shipped   Error: cannot get property "dependency" without inject
  *   upstream     both calls return a Dependency instance
  *
- * Confirmed divergence, NOT patched. The one-line-looking cause is in
+ * Confirmed divergence, NOT patched. `Service.extend` is a supported protected
+ * member in both lines and its purpose is for a subclass to expose it, so this
+ * is a plugin-author-facing break rather than a live one: nothing in the
+ * harness calls it, and the logger — which is itself callable — attributes to
+ * the right fiber on both lines. The one-line-looking cause is in
  * `createShadow` — it uses `Reflect.getOwnPropertyDescriptor` where upstream
  * uses `getPropertyDescriptor`, and a class service's member lives on the
  * prototype, so the lookup finds nothing and drops the shadow. Changing that

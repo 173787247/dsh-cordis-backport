@@ -108,6 +108,16 @@ upstream     both calls return a Dependency instance
 A callable service reached through `[Service.extend]()` loses its shadow, so the
 extension cannot see the dependency its own `inject` declares.
 
+**Who it reaches.** `Service.extend` is a supported `protected` member of the
+`Service` base class, identical in both lines, and its whole point is for a
+subclass to expose it — upstream's own test does exactly that. Nothing inside
+DeepSeek Harness calls it: the logger *is* a callable service
+(`cordis/src/logger.ts` implements `[symbols.invoke]`) but it is reached through
+`ctx.logger()`, not through `extend()`, and that path attributes to the right
+fiber on both lines. So this is a plugin-author-facing break rather than
+something live in the runtime — it fails for anyone who uses the callable
+extension pattern, which is the pattern the commit was written to support.
+
 It is not patched because it is not a backport. The visible cause is one line —
 `createShadow` calls `Reflect.getOwnPropertyDescriptor` where upstream calls
 `getPropertyDescriptor`, and a class service's member lives on the prototype, so
