@@ -52,6 +52,28 @@ reviewing them as a batch rather than as a dependency between them. The
 no-conflict claim was checked by cherry-picking all eleven, commit by commit, onto
 a clean `upstream/main`.
 
+## One that runs the other way
+
+Not every divergence here is a fix upstream has and this line lacks. The
+vendored line's own local-modification log documents a lifecycle guard that
+upstream did not have, and checking it found this:
+
+```
+as shipped   effect registered while the owner is UNLOADING   registers
+             -> the effect outlives the teardown that should have owned it,
+                and is only swept by the next unload, if there is one
+with guard   throws CordisError('INACTIVE_EFFECT')
+```
+
+`_unload()` clears `_disposables` and drains it, so a registration made from
+inside one of those disposers lands after the clear. Sent upstream as
+[#176](https://github.com/cordiverse/cordis/pull/176); probe and regression test
+in [`fuzz/09-unloading-effect-registration.mjs`](fuzz/09-unloading-effect-registration.mjs).
+
+Worth keeping in mind for the rest of this work: the direction is not always
+one-way. A pinned snapshot plus a documented modification log is a place where
+the vendored side can be ahead.
+
 ## Where the gaps actually are
 
 The nine items above all come from a **narrow window — August and September
