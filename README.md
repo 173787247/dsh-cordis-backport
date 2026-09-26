@@ -46,6 +46,19 @@ edge cases. One missing guard turns up; it is argued unreachable in
 defect, because **two missing guards mask each other** and fixing either alone
 makes the other live.
 
+## Fuzzing the core
+
+[`fuzz/`](fuzz) drives the fiber state machine with seeded random lifecycles and
+checks invariants that should hold regardless: state settles after quiescence,
+effects are accounted for exactly, `ctx.get()` never returns a dead provider's
+value, disposal cascades through nested fibers. Four fuzzers, the last issuing
+operations concurrently with no settle in between.
+
+This is how [#175](https://github.com/cordiverse/cordis/pull/175) was found — a
+fiber disposed before activation keeps its disposables forever, which no amount of
+reading two versions side by side would have shown. It also caught the two bugs in
+my own invariants, which [`fuzz/README.md`](fuzz/README.md) records.
+
 ## Backports
 
 [`backport/`](backport) holds three patches — `cordis@4.0.4`,

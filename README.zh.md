@@ -36,6 +36,16 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 [`verify/README.zh.md`](verify/README.zh.md) 里被论证为不可达，而**这个论证比缺陷本身更重要**，
 因为**两处缺失的守卫互相遮蔽**，只修任何一处都会让另一处变成活的。
 
+## 对核心做模糊测试
+
+[`fuzz/`](fuzz) 用定种子的随机生命周期驱动 fiber 状态机，检查那些无论如何都该成立的不变量：
+静默后状态落定、effect 记账精确、`ctx.get()` 永不返回已死提供者的值、嵌套 fiber 的级联释放。
+四个 fuzzer，最后一个**连发操作、中间不 settle**。
+
+[#175](https://github.com/cordiverse/cordis/pull/175) 就是这么找到的——**在激活前被 dispose 的 fiber
+永远不释放它的 disposables**，这是把两个版本对着读多少遍都看不出来的。
+它也抓出了我自己两条不变量的错，记在 [`fuzz/README.md`](fuzz/README.md) 里。
+
 ## 回移补丁
 
 [`backport/`](backport) 里有三个补丁——`cordis@4.0.4`、`cordis-plugin-loader@1.0.5`、`cordis-plugin-timer@1.1.6`——覆盖上面全部六条。它们能**干净应用于未改动的 4.0.4 源码**，验证方式与审计相同：补丁前跑一次探针，补丁后再跑一次。
