@@ -19,6 +19,7 @@ found.
 | `04-concurrent-ops.mjs` | **four operations issued back to back with no settle in between** | all of the above, under overlapping transitions |
 | `06-stale-state-after-update.mjs` | one `update()` then a dependency withdrawal | the cached `state` field against `_getState()` |
 | `07-callable-service-shadow.mjs` | a callable service reached through `[Service.extend]()` | upstream's own #37 test, ported — fixed by the shadow port |
+| `12-throwing-teardown-observer.mjs` | a listener on `internal/plugin` that throws during teardown | peers must still run and the disposal must complete — **upstream PR #177** |
 | `10-unloading-registration-harm.mjs` | a listener registered during unload, then events emitted after the fiber is `PENDING` | the registration must not survive — the harm case for #176 |
 | `09-unloading-effect-registration.mjs` | an effect registered from inside a disposer, during unload | the registration must be refused — **upstream PR #176**, the one item here that runs the other way |
 | `08-defsite-service-injection.mjs` | `ctx.foo.bar` where the accessing service injects only `foo` | upstream's `4cfd19a` test — fixed by the same port |
