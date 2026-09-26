@@ -1,8 +1,25 @@
 diff --git a/cordis-plugin-loader/lib/index.js b/cordis-plugin-loader/lib/index.js
-index aed07af..6e5706a 100644
+index aed07af..f979bdb 100644
 --- a/cordis-plugin-loader/lib/index.js
 +++ b/cordis-plugin-loader/lib/index.js
-@@ -105,9 +105,7 @@ var Group = class extends EntryGroup {
+@@ -84,12 +84,10 @@ var EntryGroup = class {
+ 			...oldMap,
+ 			...newMap
+ 		});
+-		await Promise.all(ids.map(async (id) => {
+-			if (newMap[id]) await this.create(newMap[id]).catch((error) => {
+-				this.ctx.logger.error(error);
+-			});
+-			else this.remove(id);
+-		}));
++		for (const id of ids) if (!newMap[id]) this.remove(id);
++		for (const id of ids) if (newMap[id]) await this.create(newMap[id]).catch((error) => {
++			this.ctx.logger.error(error);
++		});
+ 	}
+ 	stop() {
+ 		for (const options of this.data) this.remove(options.id, true);
+@@ -105,9 +103,7 @@ var Group = class extends EntryGroup {
  		super(ctx, ctx.fiber.entry.parent.tree);
  		this.ctx = ctx;
  		this.config = config;
@@ -13,7 +30,15 @@ index aed07af..6e5706a 100644
  	}
  	async *[Service.init]() {
  		yield () => this.stop();
-@@ -350,10 +348,10 @@ var Entry = class Entry {
+@@ -162,6 +158,7 @@ var EntryTree = class EntryTree {
+ 		if (!options.id) do
+ 			options.id = Math.random().toString(16).slice(2, 10);
+ 		while (this.store[options.id]);
++		else if (options.id.includes(EntryTree.sep)) throw new Error(`entry id must not contain "${EntryTree.sep}": ${options.id}`);
+ 		return options.id;
+ 	}
+ 	/** Resolve an entry by id, including nested ids separated by `EntryTree.sep`. */
+@@ -350,10 +347,10 @@ var Entry = class Entry {
  	evaluate(expr) {
  		return evaluate(this.ctx, expr);
  	}
@@ -27,7 +52,7 @@ index aed07af..6e5706a 100644
  		});
  	}
  	async refresh() {
-@@ -382,7 +380,7 @@ var Entry = class Entry {
+@@ -382,7 +379,7 @@ var Entry = class Entry {
  			const pending = volatileOnly && this._commitVolatile() ? [] : changes;
  			if (!pending.length && !force) return;
  			this.context.emit("loader/partial-dispose", this, legacy, true);
@@ -36,8 +61,12 @@ index aed07af..6e5706a 100644
  		} else await this.init();
  	}
  	/**
-@@ -456,7 +454,7 @@ var Entry = class Entry {
- 			this._initTask = void 0;
+@@ -452,11 +449,9 @@ var Entry = class Entry {
+ 		} catch (error) {
+ 			this.ctx.logger.error(error);
+ 			return;
+-		} finally {
+-			this._initTask = void 0;
  		}
  		const plugin = this.loader.unwrapExports(exports);
 -		this._patchContext([]);
@@ -45,7 +74,7 @@ index aed07af..6e5706a 100644
  		this.loader.showLog(this, "apply");
  		this.fiber = this.ctx.registry.plugin(plugin, this.options.config, this.getOuterStack).ctx.fiber;
  	}
-@@ -520,7 +518,7 @@ function isolate(ctx) {
+@@ -520,7 +515,7 @@ function isolate(ctx) {
  		entry.ctx[Context.intercept] = Object.create(entry.ctx[Context.intercept]);
  		entry.ctx[Context.isolate] = Object.create(entry.ctx[Context.isolate]);
  	});
@@ -54,7 +83,7 @@ index aed07af..6e5706a 100644
  		const newMap = Object.create(entry.parent.ctx[Context.isolate]);
  		for (const name of Object.keys(entry.options.isolate ?? {})) newMap[name] = access(entry, name, true);
  		const diff = Object.create(null);
-@@ -552,7 +550,7 @@ function isolate(ctx) {
+@@ -552,7 +547,7 @@ function isolate(ctx) {
  		Object.setPrototypeOf(entry.ctx[Context.intercept], entry.parent.ctx[Context.intercept]);
  		swap(entry.ctx[Context.isolate], newMap);
  		swap(entry.ctx[Context.intercept], entry.options.intercept);
@@ -63,6 +92,20 @@ index aed07af..6e5706a 100644
  		for (const [symbol1, symbol2, flag1, flag2] of Object.values(diff)) if (flag1 === flag2 && entry.ctx.reflect.store[symbol1] && !entry.ctx.reflect.store[symbol2]) {
  			entry.ctx.reflect.store[symbol2] = entry.ctx.reflect.store[symbol1];
  			delete entry.ctx.reflect.store[symbol1];
+@@ -610,9 +605,11 @@ var Loader = class extends EntryTree {
+ 		ctx.on("internal/update", function(config, noSave, next) {
+ 			if (!this.entry || noSave || this.parent.fiber?.entry === this.entry) return next();
+ 			const unparse = this.runtime?.Config?.["simplify"];
+-			this.entry.options.config = unparse ? unparse.call(this.runtime.Config, config) : config;
++			const newConfig = unparse ? unparse.call(this.runtime.Config, config) : config;
++			const result = next();
++			this.entry.options.config = newConfig;
+ 			this.entry.parent.tree.write();
+-			return next();
++			return result;
+ 		}, {
+ 			global: true,
+ 			prepend: true
 diff --git a/cordis-plugin-loader/lib/types/config/entry.d.ts b/cordis-plugin-loader/lib/types/config/entry.d.ts
 index 9d3ae2f..aecb46d 100644
 --- a/cordis-plugin-loader/lib/types/config/entry.d.ts
@@ -77,7 +120,7 @@ index 9d3ae2f..aecb46d 100644
      get context(): Context;
      get id(): string;
 diff --git a/cordis-plugin-loader/src/config/entry.ts b/cordis-plugin-loader/src/config/entry.ts
-index 8ab9f8e..0ed78c0 100644
+index 8ab9f8e..4f4cb21 100644
 --- a/cordis-plugin-loader/src/config/entry.ts
 +++ b/cordis-plugin-loader/src/config/entry.ts
 @@ -51,7 +51,7 @@ export class Entry {
@@ -114,8 +157,12 @@ index 8ab9f8e..0ed78c0 100644
      } else {
        await this.init()
      }
-@@ -229,7 +229,7 @@ export class Entry {
-       this._initTask = undefined
+@@ -225,11 +225,9 @@ export class Entry {
+     } catch (error) {
+       this.ctx.logger.error(error)
+       return
+-    } finally {
+-      this._initTask = undefined
      }
      const plugin = this.loader.unwrapExports(exports)
 -    this._patchContext([])
@@ -124,10 +171,34 @@ index 8ab9f8e..0ed78c0 100644
      this.fiber = this.ctx.registry.plugin(plugin, this.options.config, this.getOuterStack).ctx.fiber
    }
 diff --git a/cordis-plugin-loader/src/config/group.ts b/cordis-plugin-loader/src/config/group.ts
-index 15d4d49..be8a14d 100644
+index 15d4d49..4403b50 100644
 --- a/cordis-plugin-loader/src/config/group.ts
 +++ b/cordis-plugin-loader/src/config/group.ts
-@@ -78,9 +78,9 @@ export class Group extends EntryGroup {
+@@ -53,15 +53,19 @@ export class EntryGroup {
+ 
+     // update inner plugins
+     const ids = Reflect.ownKeys({ ...oldMap, ...newMap }) as string[]
+-    await Promise.all(ids.map(async (id) => {
++    // Remove entries that are no longer present, then create/update the rest.
++    // Serial execution prevents a remove from racing with a create of the
++    // same id (e.g. when an entry is moved within the same group).
++    for (const id of ids) {
++      if (!newMap[id]) this.remove(id)
++    }
++    for (const id of ids) {
+       if (newMap[id]) {
+         await this.create(newMap[id]).catch((error) => {
+           this.ctx.logger.error(error)
+         })
+-      } else {
+-        this.remove(id)
+       }
+-    }))
++    }
+   }
+ 
+   stop() {
+@@ -78,9 +82,9 @@ export class Group extends EntryGroup {
  
    constructor(public ctx: Context, public config: EntryOptions[]) {
      super(ctx, ctx.fiber.entry!.parent.tree)
@@ -162,8 +233,22 @@ index e2fd539..0dd2a06 100644
  
      // step 5: replace service impl
      for (const [symbol1, symbol2, flag1, flag2] of Object.values(diff)) {
+diff --git a/cordis-plugin-loader/src/config/tree.ts b/cordis-plugin-loader/src/config/tree.ts
+index b75d641..5fce93a 100644
+--- a/cordis-plugin-loader/src/config/tree.ts
++++ b/cordis-plugin-loader/src/config/tree.ts
+@@ -53,6 +53,9 @@ export abstract class EntryTree {
+       do {
+         options.id = Math.random().toString(16).slice(2, 10)
+       } while (this.store[options.id])
++    } else if (options.id.includes(EntryTree.sep)) {
++      // IDs containing the tree separator cannot be resolved by resolve().
++      throw new Error(`entry id must not contain "${EntryTree.sep}": ${options.id}`)
+     }
+     return options.id!
+   }
 diff --git a/cordis-plugin-loader/src/index.ts b/cordis-plugin-loader/src/index.ts
-index 51d3626..48ec1d4 100644
+index 51d3626..01264d9 100644
 --- a/cordis-plugin-loader/src/index.ts
 +++ b/cordis-plugin-loader/src/index.ts
 @@ -38,7 +38,7 @@ declare module '@deepseek-ai/cordis' {
@@ -175,3 +260,20 @@ index 51d3626..48ec1d4 100644
    }
  
    interface Context {
+@@ -115,9 +115,14 @@ export class Loader extends EntryTree {
+     ctx.on('internal/update', function (config, noSave, next) {
+       if (!this.entry || noSave || this.parent.fiber?.entry === this.entry) return next()
+       const unparse = this.runtime?.Config?.['simplify']
+-      this.entry.options.config = unparse ? unparse.call(this.runtime!.Config, config) : config
++      const newConfig = unparse ? unparse.call(this.runtime!.Config, config) : config
++      const result = next()
++      // Only persist after the update has been accepted (next() was called).
++      // If a downstream middleware vetoes the update, the runtime config stays
++      // unchanged and we must not write the new value to persistence.
++      this.entry.options.config = newConfig
+       this.entry.parent.tree.write()
+-      return next()
++      return result
+     }, { global: true, prepend: true })
+ 
+     ctx.on('internal/update', function (config, _, next) {

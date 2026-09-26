@@ -25,8 +25,9 @@ Checking the fourteen:
 | #174 test-only | not applicable |
 | #175, #176, #177, #178 | already correct — these four came out of this line's own log |
 
-**Four more fixes, from the same probes, for the same four files.** They belong in
-`backport/` alongside the twelve.
+**Four more fixes, from the same probes, for the same four files.** All four are now
+in `backport/` — `cordis-plugin-loader-1.0.5.patch` went from 15 hunks to 21 — with
+log entries 37–40, and each verified on this line with a probe.
 
 The lesson is narrower than "check everything twice": the audit's unit of
 comparison was *commits*, and a defect I found by fuzzing has no upstream commit

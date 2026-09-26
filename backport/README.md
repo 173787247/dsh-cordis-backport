@@ -2,13 +2,13 @@
 
 **English** | [中文](README.zh.md)
 
-Twelve upstream fixes the vendored cordis line has not taken, as patches against
+Sixteen fixes for the vendored cordis line: twelve upstream commits it has not taken, plus four loader defects confirmed present here by the same probes, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 
 | patch | package | hunks |
 |---|---|---|
 | `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 25 |
-| `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 15 |
+| `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 21 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
 Each patch touches `src/*.ts` **and** `lib/index.js`. The `exports` map resolves to
