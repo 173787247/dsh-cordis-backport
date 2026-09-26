@@ -1,0 +1,147 @@
+diff --git a/cordis/lib/index.js b/cordis/lib/index.js
+index 8f198c0..3fa6676 100644
+--- a/cordis/lib/index.js
++++ b/cordis/lib/index.js
+@@ -227,7 +227,7 @@ function isBailed(value) {
+ */
+ var EventsService = class {
+ 	ctx;
+-	_hooks = {};
++	_hooks = Object.create(null);
+ 	constructor(ctx) {
+ 		this.ctx = ctx;
+ 		defineProperty(this, symbols.tracker, {
+@@ -317,11 +317,18 @@ var EventsService = class {
+ 	waterfall(...args) {
+ 		const cbs = this.dispatch("waterfall", args);
+ 		const inner = args.pop();
+-		const next = () => {
+-			return (cbs.shift() ?? inner)(...args);
++		const dispatch = () => {
++			const cb = cbs.shift();
++			if (!cb) return inner();
++			let called = false;
++			const next = () => {
++				if (called) throw new Error("next() called multiple times");
++				called = true;
++				return dispatch();
++			};
++			return cb(...args, next);
+ 		};
+-		args.push(next);
+-		return next();
++		return dispatch();
+ 	}
+ 	/**
+ 	* Store a listener record as an effect on the current fiber.
+@@ -599,7 +606,9 @@ var LoggerService = class LoggerService {
+ 			colors: 3,
+ 			export: (message) => {
+ 				self.buffer.push(message);
+-				if (self.buffer.length > self.bufferSize) self.buffer = self.buffer.slice(-self.bufferSize);
++				const overflow = self.buffer.length - self.bufferSize;
++				if (overflow === 1) self.buffer.shift();
++				else if (overflow > 1) self.buffer.splice(0, overflow);
+ 			}
+ 		});
+ 		return self;
+@@ -1434,11 +1443,15 @@ var Fiber = class {
+ 			return;
+ 		}
+ 		config = this._resolveConfig(config);
+-		this.context.waterfall(this, "internal/update", config, noSave, () => {
++		const result = this.context.waterfall(this, "internal/update", config, noSave, () => {
+ 			this.config = config;
+ 			this._error = void 0;
+ 			return this.restart();
+ 		});
++		if (result === void 0) return;
++		const task = Promise.resolve(result);
++		task.catch(() => {});
++		return task;
+ 	}
+ };
+ //#endregion
+diff --git a/cordis/src/events.ts b/cordis/src/events.ts
+index c7bf426..5e02f43 100644
+--- a/cordis/src/events.ts
++++ b/cordis/src/events.ts
+@@ -129,7 +129,7 @@ export interface Hook extends EventOptions {
+  * dispatch and automatically disposes listeners with their owning fiber.
+  */
+ export class EventsService {
+-  _hooks: Record<keyof any, Hook[]> = {}
++  _hooks: Record<keyof any, Hook[]> = Object.create(null)
+ 
+   constructor(private ctx: Context) {
+     defineProperty(this, symbols.tracker, {
+@@ -234,12 +234,20 @@ export class EventsService {
+   waterfall(...args: any[]) {
+     const cbs = this.dispatch('waterfall', args)
+     const inner = args.pop()
+-    const next = () => {
+-      const cb = cbs.shift() ?? inner
+-      return cb(...args)
++    const dispatch = () => {
++      const cb = cbs.shift()
++      if (!cb) return inner()
++      let called = false
++      const next = () => {
++        // A listener reaching `next()` twice would run the rest of the chain
++        // again; only the built-in behavior may be reached once per level.
++        if (called) throw new Error('next() called multiple times')
++        called = true
++        return dispatch()
++      }
++      return cb(...args, next)
+     }
+-    args.push(next)
+-    return next()
++    return dispatch()
+   }
+ 
+   /**
+diff --git a/cordis/src/fiber.ts b/cordis/src/fiber.ts
+index 6bb1caa..e02ab33 100644
+--- a/cordis/src/fiber.ts
++++ b/cordis/src/fiber.ts
+@@ -745,10 +745,18 @@ export class Fiber {
+       return
+     }
+     config = this._resolveConfig(config)
+-    this.context.waterfall(this, 'internal/update', config, noSave, () => {
++    const result = this.context.waterfall(this, 'internal/update', config, noSave, () => {
+       this.config = config
+       this._error = undefined
+       return this.restart()
+     })
++    // a listener may veto the restart, in which case there is nothing to await
++    if (result === undefined) return
++    const task = Promise.resolve(result)
++    // the failure is already reported by the fiber, so mark it handled here:
++    // a caller that drops the result cannot turn it into an unhandled
++    // rejection, while `await update()` still observes it
++    task.catch(() => {})
++    return task
+   }
+ }
+diff --git a/cordis/src/logger.ts b/cordis/src/logger.ts
+index 7038ecc..96d5171 100644
+--- a/cordis/src/logger.ts
++++ b/cordis/src/logger.ts
+@@ -214,8 +214,13 @@ export class LoggerService {
+       colors: 3,
+       export: (message) => {
+         self.buffer.push(message)
+-        if (self.buffer.length > self.bufferSize) {
+-          self.buffer = self.buffer.slice(-self.bufferSize)
++        // Truncate in place: replacing the array would leave every existing
++        // holder of `ctx.logger.buffer` pointing at one that never stops growing.
++        const overflow = self.buffer.length - self.bufferSize
++        if (overflow === 1) {
++          self.buffer.shift()
++        } else if (overflow > 1) {
++          self.buffer.splice(0, overflow)
+         }
+       },
+     })

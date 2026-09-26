@@ -1,0 +1,155 @@
+diff --git a/cordis-plugin-loader/lib/index.js b/cordis-plugin-loader/lib/index.js
+index aed07af..6e5706a 100644
+--- a/cordis-plugin-loader/lib/index.js
++++ b/cordis-plugin-loader/lib/index.js
+@@ -105,9 +105,7 @@ var Group = class extends EntryGroup {
+ 		super(ctx, ctx.fiber.entry.parent.tree);
+ 		this.ctx = ctx;
+ 		this.config = config;
+-		ctx.on("internal/update", (config) => {
+-			this.update(config);
+-		});
++		ctx.on("internal/update", config => this.update(config));
+ 	}
+ 	async *[Service.init]() {
+ 		yield () => this.stop();
+@@ -350,10 +348,10 @@ var Entry = class Entry {
+ 	evaluate(expr) {
+ 		return evaluate(this.ctx, expr);
+ 	}
+-	_patchContext(diff) {
+-		this.context.waterfall("loader/patch-context", this, () => {
++	async _patchContext(diff) {
++		await this.context.waterfall("loader/patch-context", this, async () => {
+ 			Object.setPrototypeOf(this.ctx, this.parent.ctx);
+-			if (this.fiber?.uid && (diff.includes("config") || this.options.group)) this.fiber.update(this.options.config, true);
++			if (this.fiber?.uid && (diff.includes("config") || this.options.group)) await this.fiber.update(this.options.config, true);
+ 		});
+ 	}
+ 	async refresh() {
+@@ -382,7 +380,7 @@ var Entry = class Entry {
+ 			const pending = volatileOnly && this._commitVolatile() ? [] : changes;
+ 			if (!pending.length && !force) return;
+ 			this.context.emit("loader/partial-dispose", this, legacy, true);
+-			this._patchContext(pending);
++			await this._patchContext(pending);
+ 		} else await this.init();
+ 	}
+ 	/**
+@@ -456,7 +454,7 @@ var Entry = class Entry {
+ 			this._initTask = void 0;
+ 		}
+ 		const plugin = this.loader.unwrapExports(exports);
+-		this._patchContext([]);
++		await this._patchContext([]);
+ 		this.loader.showLog(this, "apply");
+ 		this.fiber = this.ctx.registry.plugin(plugin, this.options.config, this.getOuterStack).ctx.fiber;
+ 	}
+@@ -520,7 +518,7 @@ function isolate(ctx) {
+ 		entry.ctx[Context.intercept] = Object.create(entry.ctx[Context.intercept]);
+ 		entry.ctx[Context.isolate] = Object.create(entry.ctx[Context.isolate]);
+ 	});
+-	ctx.on("loader/patch-context", (entry, next) => {
++	ctx.on("loader/patch-context", async (entry, next) => {
+ 		const newMap = Object.create(entry.parent.ctx[Context.isolate]);
+ 		for (const name of Object.keys(entry.options.isolate ?? {})) newMap[name] = access(entry, name, true);
+ 		const diff = Object.create(null);
+@@ -552,7 +550,7 @@ function isolate(ctx) {
+ 		Object.setPrototypeOf(entry.ctx[Context.intercept], entry.parent.ctx[Context.intercept]);
+ 		swap(entry.ctx[Context.isolate], newMap);
+ 		swap(entry.ctx[Context.intercept], entry.options.intercept);
+-		next();
++		await next();
+ 		for (const [symbol1, symbol2, flag1, flag2] of Object.values(diff)) if (flag1 === flag2 && entry.ctx.reflect.store[symbol1] && !entry.ctx.reflect.store[symbol2]) {
+ 			entry.ctx.reflect.store[symbol2] = entry.ctx.reflect.store[symbol1];
+ 			delete entry.ctx.reflect.store[symbol1];
+diff --git a/cordis-plugin-loader/src/config/entry.ts b/cordis-plugin-loader/src/config/entry.ts
+index 8ab9f8e..dad993e 100644
+--- a/cordis-plugin-loader/src/config/entry.ts
++++ b/cordis-plugin-loader/src/config/entry.ts
+@@ -96,12 +96,12 @@ export class Entry {
+     return evaluate(this.ctx, expr)
+   }
+ 
+-  private _patchContext(diff: string[]) {
+-    this.context.waterfall('loader/patch-context', this, () => {
++  private async _patchContext(diff: string[]) {
++    await this.context.waterfall('loader/patch-context', this, async () => {
+       Object.setPrototypeOf(this.ctx, this.parent.ctx)
+ 
+       if (this.fiber?.uid && (diff.includes('config') || this.options.group)) {
+-        this.fiber.update(this.options.config, true)
++        await this.fiber.update(this.options.config, true)
+       }
+     })
+   }
+@@ -148,7 +148,7 @@ export class Entry {
+       const pending = volatileOnly && this._commitVolatile() ? [] : changes
+       if (!pending.length && !force) return
+       this.context.emit('loader/partial-dispose', this, legacy, true)
+-      this._patchContext(pending)
++      await this._patchContext(pending)
+     } else {
+       await this.init()
+     }
+@@ -229,7 +229,7 @@ export class Entry {
+       this._initTask = undefined
+     }
+     const plugin = this.loader.unwrapExports(exports)
+-    this._patchContext([])
++    await this._patchContext([])
+     this.loader.showLog(this, 'apply')
+     this.fiber = this.ctx.registry.plugin(plugin, this.options.config, this.getOuterStack).ctx.fiber
+   }
+diff --git a/cordis-plugin-loader/src/config/group.ts b/cordis-plugin-loader/src/config/group.ts
+index 15d4d49..be8a14d 100644
+--- a/cordis-plugin-loader/src/config/group.ts
++++ b/cordis-plugin-loader/src/config/group.ts
+@@ -78,9 +78,9 @@ export class Group extends EntryGroup {
+ 
+   constructor(public ctx: Context, public config: EntryOptions[]) {
+     super(ctx, ctx.fiber.entry!.parent.tree)
+-    ctx.on('internal/update', (config) => {
+-      this.update(config)
+-    })
++    // Returning the promise is load-bearing: the waterfall propagates it, so
++    // the caller of `loader.update()` waits for the children to reconcile.
++    ctx.on('internal/update', config => this.update(config))
+   }
+ 
+   async* [Service.init]() {
+diff --git a/cordis-plugin-loader/src/config/isolate.ts b/cordis-plugin-loader/src/config/isolate.ts
+index e2fd539..0dd2a06 100644
+--- a/cordis-plugin-loader/src/config/isolate.ts
++++ b/cordis-plugin-loader/src/config/isolate.ts
+@@ -93,7 +93,7 @@ export default function isolate(ctx: Context) {
+     entry.ctx[Context.isolate] = Object.create(entry.ctx[Context.isolate])
+   })
+ 
+-  ctx.on('loader/patch-context', (entry, next) => {
++  ctx.on('loader/patch-context', async (entry, next) => {
+     // step 1: generate new isolate map
+     const newMap: Dict<symbol> = Object.create(entry.parent.ctx[Context.isolate])
+     for (const name of Object.keys(entry.options.isolate ?? {})) {
+@@ -126,7 +126,7 @@ export default function isolate(ctx: Context) {
+     swap(entry.ctx[Context.intercept], entry.options.intercept)
+ 
+     // step 4: reload fiber
+-    next()
++    await next()
+ 
+     // step 5: replace service impl
+     for (const [symbol1, symbol2, flag1, flag2] of Object.values(diff)) {
+diff --git a/cordis-plugin-loader/src/index.ts b/cordis-plugin-loader/src/index.ts
+index 51d3626..48ec1d4 100644
+--- a/cordis-plugin-loader/src/index.ts
++++ b/cordis-plugin-loader/src/index.ts
+@@ -38,7 +38,7 @@ declare module '@deepseek-ai/cordis' {
+      * @param next - continue context refresh and Loader's config update.
+      * @mode waterfall
+      */
+-    'loader/patch-context'(entry: Entry, next: () => void): void
++    'loader/patch-context'(entry: Entry, next: () => Awaitable<void>): Awaitable<void>
+   }
+ 
+   interface Context {

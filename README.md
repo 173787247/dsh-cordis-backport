@@ -1,0 +1,80 @@
+# dsh-cordis-backport
+
+An audit of the cordis line vendored into DeepSeek Harness, and backports for the
+upstream fixes it has not taken.
+
+**Background and discussion:** https://github.com/deepseek-ai/deepseek-harness/discussions/7922
+
+## What this is
+
+DeepSeek Harness ships `@deepseek-ai/cordis@4.0.4` and its plugins rather than the
+published `cordis` package. That line is not a renamed snapshot of
+`cordis@4.0.0-rc.10` — it is a separate track with its own `config/diff.ts`, its own
+`volatile` concept, and its own handling of `!!js` in `disabled`. Both tracks make
+their own trade-offs.
+
+What follows from that is the thing this repository is about: **upstream has fixed
+bugs that the vendored line still has**, in code DSH runs every day.
+
+## The six, each reproduced
+
+Every row was confirmed with one probe run against the shipped packages and against
+upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes/`](probes).
+
+| upstream | where | before → after |
+|---|---|---|
+| [`2ceea23`](https://github.com/cordiverse/cordis/commit/2ceea23) (#109) | `cordis/src/fiber.ts` | `Fiber.update()` returned `undefined`; a dropped call produced `unhandledRejection: 'boom'` → returns the task, rejects to an awaiter, nothing leaks |
+| [`1b7d0f2`](https://github.com/cordiverse/cordis/commit/1b7d0f2) | `loader/src/config/{entry,group,isolate}.ts` | a new child entry had no fiber when `await loader.update()` resolved → reconciled by then |
+| [`5b195b3`](https://github.com/cordiverse/cordis/commit/5b195b3) (#44) | `cordis/src/events.ts` | a listener reaching `next()` twice ran the chain again silently → throws `next() called multiple times` |
+| [`cb77029`](https://github.com/cordiverse/cordis/commit/cb77029) (#53) | `timer/src/index.ts` | 2 and 3 concurrent `next()` waiters both timed out → all settle in order |
+| [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
+| [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
+
+## Backports
+
+[`backport/`](backport) holds three patches — `cordis@4.0.4`,
+`cordis-plugin-loader@1.0.5`, `cordis-plugin-timer@1.1.6` — covering all six.
+They apply cleanly to untouched 4.0.4 sources and were verified the same way the
+audit was: probe before, probe after.
+
+Note that each patch touches `src/*.ts` **and** `lib/index.js`. `exports` resolves
+to the bundle, so changing `src` alone does not change what runs; shipping both
+halves means the patch can be verified without a rebuild.
+
+## Two things worth knowing before cherry-picking
+
+**The innocent-looking hunks are the load-bearing ones.** In `1b7d0f2`, this reads
+like formatting:
+
+```diff
+-    ctx.on('internal/update', (config) => {
+-      this.update(config)
+-    })
++    ctx.on('internal/update', config => this.update(config))
+```
+
+It is not. The first returns `undefined`; the second implicitly returns the promise,
+and the waterfall propagates a listener's return value out to `Fiber.update`'s
+caller. That is where the await chain actually breaks. With only `entry.ts` and
+`isolate.ts` changed the probe still failed; it passed once this went in.
+
+**"Added lines not found here" does not mean "fix missing".** Both tracks have been
+refactored. A line-matching pass over the upstream log flagged twelve commits as
+absent; checking them one at a time, half were the same feature written differently
+(`be7d36e` #37, `752dbee` #40). Only behaviour counts, which is why every item above
+has a probe rather than a diff.
+
+Not included, deliberately:
+
+- `8abd903` (#35, caller tracking) — `symbols.caller` does not exist here at all, so
+  this is a feature rather than a repair.
+- `c594d1a` (#121) and `c2835d8` (#123) — the include here **deliberately** vetoes the
+  fiber restart and persists the config itself, with a comment explaining why.
+  Following upstream there is a product decision, not a backport.
+
+## Running the probes
+
+The probes need two module trees: one resolving `@deepseek-ai/*` (the shipped
+packages) and one resolving `cordis` / `@cordisjs/*` (upstream). See
+[`probes/README.md`](probes/README.md) for the layout and the one-line module-name
+substitution that lets a single probe run against either side.
