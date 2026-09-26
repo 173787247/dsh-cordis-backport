@@ -106,6 +106,32 @@ index 8f198c0..36ae34b 100644
  	}
  };
  //#endregion
+diff --git a/cordis/lib/types/context.d.ts b/cordis/lib/types/context.d.ts
+index 93c2b37..111743a 100644
+--- a/cordis/lib/types/context.d.ts
++++ b/cordis/lib/types/context.d.ts
+@@ -20,7 +20,7 @@ export interface Context {
+     /** The root context of the application (every child context shares it). @experimental */
+     root: this;
+     /** Base URL used to resolve relative plugin/module specifiers, if the runtime sets one. */
+-    baseUrl?: string;
++    baseUrl?: string | undefined;
+     /** The event bus. Its methods are also mixed onto `ctx` (`ctx.on`, `ctx.emit`, ...). */
+     events: EventsService;
+     /** The logging service. Call `ctx.logger(name)` for a named logger. */
+diff --git a/cordis/src/context.ts b/cordis/src/context.ts
+index 0488423..b7dcf44 100644
+--- a/cordis/src/context.ts
++++ b/cordis/src/context.ts
+@@ -21,7 +21,7 @@ export interface Context {
+   /** The root context of the application (every child context shares it). @experimental */
+   root: this
+   /** Base URL used to resolve relative plugin/module specifiers, if the runtime sets one. */
+-  baseUrl?: string
++  baseUrl?: string | undefined
+   /** The event bus. Its methods are also mixed onto `ctx` (`ctx.on`, `ctx.emit`, ...). */
+   events: EventsService
+   /** The logging service. Call `ctx.logger(name)` for a named logger. */
 diff --git a/cordis/src/events.ts b/cordis/src/events.ts
 index c7bf426..5e02f43 100644
 --- a/cordis/src/events.ts

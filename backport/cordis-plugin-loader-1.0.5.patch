@@ -63,10 +63,32 @@ index aed07af..6e5706a 100644
  		for (const [symbol1, symbol2, flag1, flag2] of Object.values(diff)) if (flag1 === flag2 && entry.ctx.reflect.store[symbol1] && !entry.ctx.reflect.store[symbol2]) {
  			entry.ctx.reflect.store[symbol2] = entry.ctx.reflect.store[symbol1];
  			delete entry.ctx.reflect.store[symbol1];
+diff --git a/cordis-plugin-loader/lib/types/config/entry.d.ts b/cordis-plugin-loader/lib/types/config/entry.d.ts
+index 9d3ae2f..aecb46d 100644
+--- a/cordis-plugin-loader/lib/types/config/entry.d.ts
++++ b/cordis-plugin-loader/lib/types/config/entry.d.ts
+@@ -27,7 +27,7 @@ export declare class Entry {
+     options: EntryOptions;
+     subgroup?: EntryGroup;
+     subtree?: EntryTree;
+-    _initTask?: Promise<void>;
++    _initTask?: Promise<void> | undefined;
+     constructor(loader: Loader);
+     get context(): Context;
+     get id(): string;
 diff --git a/cordis-plugin-loader/src/config/entry.ts b/cordis-plugin-loader/src/config/entry.ts
-index 8ab9f8e..dad993e 100644
+index 8ab9f8e..0ed78c0 100644
 --- a/cordis-plugin-loader/src/config/entry.ts
 +++ b/cordis-plugin-loader/src/config/entry.ts
+@@ -51,7 +51,7 @@ export class Entry {
+   public subgroup?: EntryGroup
+   public subtree?: EntryTree
+ 
+-  _initTask?: Promise<void>
++  _initTask?: Promise<void> | undefined
+ 
+   constructor(public loader: Loader) {
+     this.ctx = loader.ctx.extend({ [Entry.key]: this })
 @@ -96,12 +96,12 @@ export class Entry {
      return evaluate(this.ctx, expr)
    }

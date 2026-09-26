@@ -2,13 +2,13 @@
 
 **English** | [中文](README.zh.md)
 
-Eight upstream fixes the vendored cordis line has not taken, as patches against
+Nine upstream fixes the vendored cordis line has not taken, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 
 | patch | package | hunks |
 |---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 12 |
-| `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 13 |
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 14 |
+| `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 15 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
 Each patch touches `src/*.ts` **and** `lib/index.js`. The `exports` map resolves to
@@ -20,6 +20,7 @@ rebuild. `lib` is esbuild output, unminified — readable and hand-editable.
 
 | upstream | file | before → after |
 |---|---|---|
+| `988df36` (#68) | `cordis/src/context.ts`, `loader/src/config/entry.ts`, **and the shipped `.d.ts`** | `baseUrl?: string` and `_initTask?: Promise<void>` were not widened to `| undefined`, so a consumer compiling with `exactOptionalPropertyTypes` cannot assign `undefined` to them. This is the one item in the set that changes no runtime behaviour |
 | `10194de` (#98) | `cordis/src/fiber.ts` | a `FAILED` fiber re-entered its lifecycle on a dependency refresh, so a plugin whose `apply` throws had it called again on every withdraw/re-provide — side effects before the throw accumulate while the state stays `FAILED` |
 | `752dbee` (#40) | `cordis/src/fiber.ts` | `plugin()` returns an `Object.create(fiber)` wrapper; assigning lifecycle fields through `this` put a **second copy on the wrapper**, shadowing the real fiber's — a later dependency withdrawal then updates only one of them → wrapper keeps reading `ACTIVE` after the fiber unloaded |
 | `2ceea23` (#109) | `cordis/src/fiber.ts` | `update()` returned `undefined`; dropped, it produced `unhandledRejection: 'boom'` → returns the task, rejects to an awaiter, nothing leaks |
@@ -72,6 +73,26 @@ expect(Object.hasOwn(fiber, 'inertia')).to.equal(false)
 
 The lesson generalises: for a codebase with a wrapper/prototype indirection,
 "does this identifier exist" says nothing about whether a fix is present.
+
+### The type-only one
+
+`988df36` (#68) is worth a sentence because it is the only item here with no
+runtime effect, and because it needed the `.d.ts` as well as `src`. A consumer
+compiling against the shipped types:
+
+```ts
+import type { Context } from '@deepseek-ai/cordis'
+export function clearBaseUrl(ctx: Context) { ctx.baseUrl = undefined }
+```
+
+```
+as shipped, with exactOptionalPropertyTypes   error TS2412 (2 sites)
+with `| undefined` added to that one line     compiles
+```
+
+Nothing else was changed in that comparison — the causality is the single
+`| undefined`. The patch therefore touches `src/*.ts` and the matching
+`lib/types/*.d.ts`, since the types ship built.
 
 ## Confirmed, but not in this patch set
 

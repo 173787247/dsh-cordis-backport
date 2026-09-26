@@ -18,13 +18,14 @@ their own trade-offs.
 What follows from that is the thing this repository is about: **upstream has fixed
 bugs that the vendored line still has**, in code DSH runs every day.
 
-## The eight, each reproduced
+## The nine, each reproduced
 
 Every row was confirmed with one probe run against the shipped packages and against
 upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes/`](probes).
 
 | upstream | where | before → after |
 |---|---|---|
+| [`988df36`](https://github.com/cordiverse/cordis/commit/988df36) (#68) | `cordis/src/context.ts` | optional properties left un-widened, so `exactOptionalPropertyTypes` consumers cannot assign `undefined` — type-level only, no runtime change |
 | [`10194de`](https://github.com/cordiverse/cordis/commit/10194de) (#98) | `cordis/src/fiber.ts` | a `FAILED` fiber re-entered its lifecycle on a dependency refresh, re-running a plugin that had already thrown |
 | [`752dbee`](https://github.com/cordiverse/cordis/commit/752dbee) (#40) | `cordis/src/fiber.ts` | `plugin()` returns an `Object.create(fiber)` wrapper; writing lifecycle fields through `this` shadowed the real fiber's, so after a config update the wrapper and the fiber disagreed — the wrapper kept reporting `ACTIVE` after unload |
 | [`2ceea23`](https://github.com/cordiverse/cordis/commit/2ceea23) (#109) | `cordis/src/fiber.ts` | `Fiber.update()` returned `undefined`; a dropped call produced `unhandledRejection: 'boom'` → returns the task, rejects to an awaiter, nothing leaks |

@@ -12,12 +12,13 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 
 由此带来一个后果，也是本仓库的主题：**上游修过的一些 bug，vendor 这条线里还在**，而这些代码 DSH 每天都在跑。
 
-## 八条，每条都复现过
+## 九条，每条都复现过
 
 每一行都用**同一份探针**在 vendor 包和上游 `cordis@4.0.0-rc.10` 上各跑一次得到，除此之外没有任何其他改动。探针在 [`probes/`](probes)。
 
 | 上游 | 位置 | 补丁前 → 补丁后 |
 |---|---|---|
+| [`988df36`](https://github.com/cordiverse/cordis/commit/988df36) (#68) | `cordis/src/context.ts` | 可选属性没加 `| undefined`，开了 `exactOptionalPropertyTypes` 的使用者无法赋 `undefined`——纯类型层，无运行时变化 |
 | [`10194de`](https://github.com/cordiverse/cordis/commit/10194de) (#98) | `cordis/src/fiber.ts` | `FAILED` 的 fiber 在依赖刷新时**重新进入生命周期**——已经抛过错的插件 `apply` 被反复执行 |
 | [`752dbee`](https://github.com/cordiverse/cordis/commit/752dbee) (#40) | `cordis/src/fiber.ts` | `plugin()` 返回的是 `Object.create(fiber)` wrapper；通过 `this` 写生命周期字段会在 **wrapper 上多出一份**，遮蔽真 fiber 的那份——配置更新后两者分叉，卸载后 wrapper 仍报 `ACTIVE` |
 | [`2ceea23`](https://github.com/cordiverse/cordis/commit/2ceea23) (#109) | `cordis/src/fiber.ts` | `Fiber.update()` 返回 `undefined`；被丢弃时产生 `unhandledRejection: 'boom'` → 返回 task，可被 await 捕获，不再泄漏 |
