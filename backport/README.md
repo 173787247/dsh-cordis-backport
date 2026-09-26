@@ -1,5 +1,7 @@
 # backport
 
+**English** | [中文](README.zh.md)
+
 Six upstream fixes the vendored cordis line has not taken, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 

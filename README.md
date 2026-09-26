@@ -1,5 +1,7 @@
 # dsh-cordis-backport
 
+**English** | [中文](README.zh.md)
+
 An audit of the cordis line vendored into DeepSeek Harness, and backports for the
 upstream fixes it has not taken.
 
