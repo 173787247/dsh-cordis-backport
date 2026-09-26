@@ -35,6 +35,39 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## Where the gaps actually are
+
+The nine items above all come from a **narrow window — August and September
+2026**. That is worth stating explicitly, because the obvious reading of a
+vendored line sitting at `4.0.4` against an upstream `4.0.0-rc.10` is that it has
+drifted far behind. It has not.
+
+Scanning every upstream `fix` commit before July 2026 — 78 of them — and checking
+each against the vendored line, the historical fixes are essentially all present:
+
+| upstream | verdict |
+|---|---|
+| `fa817a6` (#20, `null instanceof Service` crash) | present — `if (!instance) return false` |
+| `566aee7` (#22, `DisposableList` reading `this.sn` late) | present — `const sn = ++this.sn` |
+| `2e4cc04` (#24, optional inject reading unknown services) | present |
+| `938513b` (do not emit unhandled rejections) | present — the `while (this.inertia)` loop and its comment |
+| `dd8bf6e` (logger respects def-site names) | present — `this.ctx[symbols.shadow] ?? this.ctx` |
+| `bd6e229` (timer `iterator.throw()` result) | present — the `done.kind` shape |
+| `592b4f3`, `9797afb` (loader `internal/plugin` case analysis) | present, and numbered per a **later** upstream state |
+| `e20aef4` (include resolves `baseUrl`) | present |
+
+Not applicable rather than missing: the `hmr` package (not shipped), and the
+`scope.ts` / `entry.ts`-era commits whose files were renamed before this line
+existed.
+
+So the line is actively maintained and the cherry-picking is thorough. What it
+has not taken is the most recent work — which is also the work least likely to
+have been reviewed yet, since upstream's merge cadence runs in multi-week bursts
+and the newest commits are the ones still open as pull requests.
+
+That is the useful conclusion for anyone re-running this later: **start from the
+last few weeks of upstream history, not from the beginning.**
+
 ## Verification of code upstream does not have
 
 [`verify/`](verify) covers the one part of this tree with no upstream counterpart:
