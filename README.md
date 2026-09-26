@@ -32,6 +32,20 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## Verification of code upstream does not have
+
+[`verify/`](verify) covers the one part of this tree with no upstream counterpart:
+the `volatile` config machinery (`cosmokit/src/volatile.ts`, the schemastery
+support, `loader/src/config/diff.ts`). Upstream has none of it, so unlike the
+backports above, none of it has been read by anyone outside the team that wrote it.
+
+Short version: `equalExceptVolatile` — the function that decides whether a config
+change needs a remount — holds up under 5000 seeded config pairs plus targeted
+edge cases. One missing guard turns up; it is argued unreachable in
+[`verify/README.md`](verify/README.md), and the argument matters more than the
+defect, because **two missing guards mask each other** and fixing either alone
+makes the other live.
+
 ## Backports
 
 [`backport/`](backport) holds three patches — `cordis@4.0.4`,

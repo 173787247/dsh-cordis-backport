@@ -25,6 +25,17 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` 抛 `hooks[method] is not a function` → 正常注册 |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | 外部持有的 `ctx.logger.buffer` **持续增长**、超出上限 → 稳定在有界范围内 |
 
+## 对上游没有的那部分代码的验证
+
+[`verify/`](verify) 覆盖这个代码树里**唯一没有上游对应物**的部分：`volatile` 配置机制
+（`cosmokit/src/volatile.ts`、schemastery 的支持、`loader/src/config/diff.ts`）。
+上游一样都没有——所以和上面的回移补丁不同，**这部分从没被写它的人之外的人读过**。
+
+简短结论：`equalExceptVolatile`——那个决定配置变更要不要重挂载的函数——经得起
+5000 组定种子配置对加定向边界用例。发现一处缺失的守卫；它在
+[`verify/README.zh.md`](verify/README.zh.md) 里被论证为不可达，而**这个论证比缺陷本身更重要**，
+因为**两处缺失的守卫互相遮蔽**，只修任何一处都会让另一处变成活的。
+
 ## 回移补丁
 
 [`backport/`](backport) 里有三个补丁——`cordis@4.0.4`、`cordis-plugin-loader@1.0.5`、`cordis-plugin-timer@1.1.6`——覆盖上面全部六条。它们能**干净应用于未改动的 4.0.4 源码**，验证方式与审计相同：补丁前跑一次探针，补丁后再跑一次。
