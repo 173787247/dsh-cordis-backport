@@ -2,12 +2,12 @@
 
 **English** | [中文](README.zh.md)
 
-Seven upstream fixes the vendored cordis line has not taken, as patches against
+Eight upstream fixes the vendored cordis line has not taken, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 
 | patch | package | hunks |
 |---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 10 |
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 12 |
 | `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 13 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
@@ -20,6 +20,7 @@ rebuild. `lib` is esbuild output, unminified — readable and hand-editable.
 
 | upstream | file | before → after |
 |---|---|---|
+| `10194de` (#98) | `cordis/src/fiber.ts` | a `FAILED` fiber re-entered its lifecycle on a dependency refresh, so a plugin whose `apply` throws had it called again on every withdraw/re-provide — side effects before the throw accumulate while the state stays `FAILED` |
 | `752dbee` (#40) | `cordis/src/fiber.ts` | `plugin()` returns an `Object.create(fiber)` wrapper; assigning lifecycle fields through `this` put a **second copy on the wrapper**, shadowing the real fiber's — a later dependency withdrawal then updates only one of them → wrapper keeps reading `ACTIVE` after the fiber unloaded |
 | `2ceea23` (#109) | `cordis/src/fiber.ts` | `update()` returned `undefined`; dropped, it produced `unhandledRejection: 'boom'` → returns the task, rejects to an awaiter, nothing leaks |
 | `1b7d0f2` | `cordis-plugin-loader/src/config/{entry,group,isolate}.ts` | a new child entry had no fiber when `await loader.update()` resolved → reconciled by then |
@@ -71,6 +72,29 @@ expect(Object.hasOwn(fiber, 'inertia')).to.equal(false)
 
 The lesson generalises: for a codebase with a wrapper/prototype indirection,
 "does this identifier exist" says nothing about whether a fix is present.
+
+## Confirmed, but not in this patch set
+
+`be7d36e` (#37, *apply shadows to callable services*) — **the upstream test for it
+fails here**, ported verbatim to
+[`../fuzz/07-callable-service-shadow.mjs`](../fuzz/07-callable-service-shadow.mjs):
+
+```
+as shipped   Error: cannot get property "dependency" without inject
+upstream     both calls return a Dependency instance
+```
+
+A callable service reached through `[Service.extend]()` loses its shadow, so the
+extension cannot see the dependency its own `inject` declares.
+
+It is not patched because it is not a backport. The visible cause is one line —
+`createShadow` calls `Reflect.getOwnPropertyDescriptor` where upstream calls
+`getPropertyDescriptor`, and a class service's member lives on the prototype, so
+the lookup misses and the shadow is dropped. **Changing that alone does not fix
+it.** The whole `get` trap in `createTraceable` is an earlier shape here; upstream
+reworked it in the same commit. That is a refactor of the shadow machinery, and
+half of it is worse than none — I reverted my attempt rather than ship an
+unverified half.
 
 ## Applying
 

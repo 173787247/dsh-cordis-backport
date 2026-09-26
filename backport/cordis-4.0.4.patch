@@ -1,5 +1,5 @@
 diff --git a/cordis/lib/index.js b/cordis/lib/index.js
-index 8f198c0..4b15fe1 100644
+index 8f198c0..36ae34b 100644
 --- a/cordis/lib/index.js
 +++ b/cordis/lib/index.js
 @@ -227,7 +227,7 @@ function isBailed(value) {
@@ -45,7 +45,15 @@ index 8f198c0..4b15fe1 100644
  			}
  		});
  		return self;
-@@ -1408,10 +1417,11 @@ var Fiber = class {
+@@ -1330,6 +1339,7 @@ var Fiber = class {
+ 	_setEpoch(epoch) {
+ 		const oldEpoch = this._runner.epoch;
+ 		if (epoch === oldEpoch) return;
++		if (this._error) return;
+ 		this._runner.epoch = epoch;
+ 		if (this.inertia) return;
+ 		this._updateState(() => {
+@@ -1408,10 +1418,11 @@ var Fiber = class {
  	* @throws {CordisError} `INACTIVE_EFFECT` when the fiber is already disposed.
  	*/
  	async restart() {
@@ -61,7 +69,7 @@ index 8f198c0..4b15fe1 100644
  	}
  	/**
  	* Validate and apply new config, then restart the plugin.
-@@ -1425,20 +1435,25 @@ var Fiber = class {
+@@ -1425,20 +1436,25 @@ var Fiber = class {
  	* @throws {ValidationError} when the new config fails validation.
  	*/
  	update(config, noSave = false) {
@@ -138,10 +146,20 @@ index c7bf426..5e02f43 100644
  
    /**
 diff --git a/cordis/src/fiber.ts b/cordis/src/fiber.ts
-index 6bb1caa..c8543c5 100644
+index 6bb1caa..90edef3 100644
 --- a/cordis/src/fiber.ts
 +++ b/cordis/src/fiber.ts
-@@ -716,10 +716,11 @@ export class Fiber {
+@@ -625,6 +625,9 @@ export class Fiber {
+   private _setEpoch(epoch: string) {
+     const oldEpoch = this._runner.epoch
+     if (epoch === oldEpoch) return
++    // a failed fiber only recovers through update(), which clears _error;
++    // without this a dependency refresh re-runs a plugin that already threw
++    if (this._error) return
+     this._runner.epoch = epoch
+     if (this.inertia) return
+     this._updateState(() => {
+@@ -716,10 +719,11 @@ export class Fiber {
     * @throws {CordisError} `INACTIVE_EFFECT` when the fiber is already disposed.
     */
    async restart() {
@@ -157,7 +175,7 @@ index 6bb1caa..c8543c5 100644
    }
  
    /**
-@@ -734,21 +735,34 @@ export class Fiber {
+@@ -734,21 +738,34 @@ export class Fiber {
     * @throws {ValidationError} when the new config fails validation.
     */
    update(config: any, noSave = false) {

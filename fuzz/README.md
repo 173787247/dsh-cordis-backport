@@ -17,6 +17,8 @@ found.
 | `02-nested-fibers.mjs` | the above, with fibers registering fibers two levels deep | parent disposal cascades, no orphaned effects |
 | `03-multi-provider.mjs` | several fibers providing the same service, disposed in random order | `ctx.get()` is defined ⟺ a provider is alive, never returns a dead provider's value |
 | `04-concurrent-ops.mjs` | **four operations issued back to back with no settle in between** | all of the above, under overlapping transitions |
+| `06-stale-state-after-update.mjs` | one `update()` then a dependency withdrawal | the cached `state` field against `_getState()` |
+| `07-callable-service-shadow.mjs` | a callable service reached through `[Service.extend]()` | upstream's own #37 test, ported — **fails here, not patched** |
 
 All seeded (`mulberry32`) and deterministic — a failure names a replayable seed.
 All default to upstream; see *Running against another line* below.
