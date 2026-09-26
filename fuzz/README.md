@@ -55,6 +55,41 @@ when registration succeeds.
 Both are the same lesson as `../README.md`'s: an assertion firing is not a bug,
 and the reachability argument has to come before the report.
 
+## 06: cached state goes stale after an update — confirmed, root cause not
+
+`06-stale-state-after-update.mjs` is not a fuzzer; it is the reduction of one.
+
+A fiber's cached `state` field can disagree with the epoch after a config
+update, and a later dependency withdrawal then never reaches it:
+
+```
+DSH 4.0.4       撤销 b 后   state=ACTIVE   _getState=PENDING   epoch=__INACTIVE__   ★
+upstream rc.10  撤销 b 后   state=PENDING  _getState=PENDING   epoch=__INACTIVE__   ✓
+```
+
+Ten lines, deterministic, and it needs the `update()` — drop that one call and
+the two lines agree. The epoch moves and the derived state follows it; only the
+cached field lags, and nothing writes to `state` at all on the withdrawal path,
+so `_updateState()` is never reached there.
+
+That the cached field is the one read in the places that matter is why this is
+worth writing down even unfinished:
+
+- `cordis/src/reflect.ts:294` — `if (this.ctx.fiber.state === FiberState.ACTIVE)`
+- `cordis-plugin-loader/src/config/entry.ts:145` — gates the volatile-only fast path
+
+A fiber that believes it is active after being unloaded may keep providing a
+service it no longer owns.
+
+**What is not done: the root cause.** I reduced it to the `update()` but did not
+find the assignment that skips `_updateState()`. Ruled out along the way: the
+`if (this.inertia) return` early exit in `_setEpoch` (inertia is `undefined` by
+then), and `_reload()`'s catch (which would have set `_error`, and `_getState()`
+reports `PENDING`, not `FAILED`). The epoch is `INACTIVE` and the field is
+`ACTIVE`, so something set the epoch on a path that does not refresh the field.
+
+Until that is pinned down this is a symptom report, not a patch.
+
 ## An open discrepancy, not a finding
 
 Run against the vendored `@deepseek-ai/cordis@4.0.4` line, `01`, `02` and `04`
