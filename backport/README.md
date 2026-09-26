@@ -96,6 +96,11 @@ Nothing else was changed in that comparison — the causality is the single
 
 ## Confirmed, but not in this patch set
 
+Both open items land in the same place — the shadow/traceable machinery in
+`cordis/src/utils.ts` and `reflect.ts` — and this line has an earlier shape of
+it. They are grouped here because fixing either means reworking that, and
+adjusting `createShadow` alone was tried against each and fixes neither.
+
 `be7d36e` (#37, *apply shadows to callable services*) — **the upstream test for it
 fails here**, ported verbatim to
 [`../fuzz/07-callable-service-shadow.mjs`](../fuzz/07-callable-service-shadow.mjs):
@@ -126,6 +131,21 @@ it.** The whole `get` trap in `createTraceable` is an earlier shape here; upstre
 reworked it in the same commit. That is a refactor of the shadow machinery, and
 half of it is worse than none — I reverted my attempt rather than ship an
 unverified half.
+
+### `4cfd19a` — def-site service injection: confirmed, **not** patched
+
+The other half of the same gap. Upstream's test, ported to
+[`../fuzz/08-defsite-service-injection.mjs`](../fuzz/08-defsite-service-injection.mjs):
+
+```
+as shipped   qux, which never injects `foo.bar`, still reaches it
+             baz, which does inject it, cannot reach it from a nested context
+upstream     both behave as their `inject` declares
+```
+
+The first line is the one that matters. `inject` is how a plugin declares what it
+depends on; here a service reaches a service it never declared, so the declaration
+stops being a reliable statement of the plugin's dependencies.
 
 ## Applying
 

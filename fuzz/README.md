@@ -19,6 +19,7 @@ found.
 | `04-concurrent-ops.mjs` | **four operations issued back to back with no settle in between** | all of the above, under overlapping transitions |
 | `06-stale-state-after-update.mjs` | one `update()` then a dependency withdrawal | the cached `state` field against `_getState()` |
 | `07-callable-service-shadow.mjs` | a callable service reached through `[Service.extend]()` | upstream's own #37 test, ported — **fails here, not patched** |
+| `08-defsite-service-injection.mjs` | `ctx.foo.bar` where the accessing service injects only `foo` | upstream's `4cfd19a` test — **fails here, same unpatched gap** |
 
 All seeded (`mulberry32`) and deterministic — a failure names a replayable seed.
 All default to upstream; see *Running against another line* below.

@@ -133,6 +133,12 @@ changes is the *receiver* of an assignment — `this.assertActive()` becomes
 see it. It was found by fuzzing instead, and it is the seventh item above. The
 correction is written up in [`backport/README.md`](backport/README.md).
 
+The audit window is fully adjudicated: all sixteen upstream `fix` commits between
+2026-08-01 and the head of `upstream/main` carry a verdict — nine backported, two
+confirmed and deliberately unpatched (the shadow gap above), two deliberate
+divergences, one a feature, one not applicable (the `hmr` package is not shipped
+here), one already present.
+
 Not included, deliberately:
 
 - `8abd903` (#35, caller tracking) — `symbols.caller` does not exist here at all, so
