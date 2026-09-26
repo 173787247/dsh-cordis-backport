@@ -52,6 +52,23 @@ reviewing them as a batch rather than as a dependency between them. The
 no-conflict claim was checked by cherry-picking all eleven, commit by commit, onto
 a clean `upstream/main`.
 
+## Areas checked with no divergence found
+
+Recorded so a later pass does not re-spend the effort. Each was probed against
+both lines and they behaved identically:
+
+- **`ctx.isolate` realms** — cross-realm invisibility, and a withdrawal waking
+  only the realm that provided it (`fuzz/15`)
+- **`registry.delete()`** — returns with its fibers still `UNLOADING` and no
+  handle to await, on both lines; delete-then-immediately-re-plugin reaches
+  `DISPOSED` / `ACTIVE` correctly on both (`fuzz/16`)
+- **`Service` base class** — `[Symbol.hasInstance]`, `[symbols.filter]`,
+  `[symbols.extend]`, `[symbols.invoke]`; read line by line, nothing divergent
+- **`RegistryService`** — `resolve`, `delete`, `_internal` lifetime
+- **DSH local modifications 8, 11, 14, 19, 20, 21** — upstream already has each
+- **`ctx.volatile`** — DSH-only machinery, and it passes a 5000-case fuzz
+  (`verify/`)
+
 ## What the audit could not see
 
 Every finding here came from comparing commits, and that has a blind spot: **the
