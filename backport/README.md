@@ -2,12 +2,12 @@
 
 **English** | [中文](README.zh.md)
 
-Nine upstream fixes the vendored cordis line has not taken, as patches against
+Eleven upstream fixes the vendored cordis line has not taken, as patches against
 `@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
 
 | patch | package | hunks |
 |---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 14 |
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 22 |
 | `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 15 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
@@ -20,6 +20,7 @@ rebuild. `lib` is esbuild output, unminified — readable and hand-editable.
 
 | upstream | file | before → after |
 |---|---|---|
+| `be7d36e` (#37) **+** `4cfd19a` | `cordis/src/utils.ts`, `cordis/src/reflect.ts` | a callable service reached through `[Service.extend]()` lost its shadow, and an access through `ctx.foo.bar` was governed by the wrong context — so a service reached a service it never declared, and one that *had* declared it could not reach it from a nested context. Upstream reworked the block across both commits; this is that rework |
 | `988df36` (#68) | `cordis/src/context.ts`, `loader/src/config/entry.ts`, **and the shipped `.d.ts`** | `baseUrl?: string` and `_initTask?: Promise<void>` were not widened to `| undefined`, so a consumer compiling with `exactOptionalPropertyTypes` cannot assign `undefined` to them. This is the one item in the set that changes no runtime behaviour |
 | `10194de` (#98) | `cordis/src/fiber.ts` | a `FAILED` fiber re-entered its lifecycle on a dependency refresh, so a plugin whose `apply` throws had it called again on every withdraw/re-provide — side effects before the throw accumulate while the state stays `FAILED` |
 | `752dbee` (#40) | `cordis/src/fiber.ts` | `plugin()` returns an `Object.create(fiber)` wrapper; assigning lifecycle fields through `this` put a **second copy on the wrapper**, shadowing the real fiber's — a later dependency withdrawal then updates only one of them → wrapper keeps reading `ACTIVE` after the fiber unloaded |
@@ -94,58 +95,35 @@ Nothing else was changed in that comparison — the causality is the single
 `| undefined`. The patch therefore touches `src/*.ts` and the matching
 `lib/types/*.d.ts`, since the types ship built.
 
-## Confirmed, but not in this patch set
+## The shadow rework
 
-Both open items land in the same place — the shadow/traceable machinery in
-`cordis/src/utils.ts` and `reflect.ts` — and this line has an earlier shape of
-it. They are grouped here because fixing either means reworking that, and
-adjusting `createShadow` alone was tried against each and fixes neither.
+Both remaining items were the same block of code — `createShadow` and the `get`
+trap of `createTraceable` in `cordis/src/utils.ts`, plus the `defSite` guard in
+`reflect.ts` — and this line had an earlier shape of it. Upstream reworked that
+block across `be7d36e` (#37) and `4cfd19a`, so it is one port covering two
+commits.
 
-`be7d36e` (#37, *apply shadows to callable services*) — **the upstream test for it
-fails here**, ported verbatim to
-[`../fuzz/07-callable-service-shadow.mjs`](../fuzz/07-callable-service-shadow.mjs):
-
-```
-as shipped   Error: cannot get property "dependency" without inject
-upstream     both calls return a Dependency instance
-```
-
-A callable service reached through `[Service.extend]()` loses its shadow, so the
-extension cannot see the dependency its own `inject` declares.
-
-**Who it reaches.** `Service.extend` is a supported `protected` member of the
-`Service` base class, identical in both lines, and its whole point is for a
-subclass to expose it — upstream's own test does exactly that. Nothing inside
-DeepSeek Harness calls it: the logger *is* a callable service
-(`cordis/src/logger.ts` implements `[symbols.invoke]`) but it is reached through
-`ctx.logger()`, not through `extend()`, and that path attributes to the right
-fiber on both lines. So this is a plugin-author-facing break rather than
-something live in the runtime — it fails for anyone who uses the callable
-extension pattern, which is the pattern the commit was written to support.
-
-It is not patched because it is not a backport. The visible cause is one line —
-`createShadow` calls `Reflect.getOwnPropertyDescriptor` where upstream calls
-`getPropertyDescriptor`, and a class service's member lives on the prototype, so
-the lookup misses and the shadow is dropped. **Changing that alone does not fix
-it.** The whole `get` trap in `createTraceable` is an earlier shape here; upstream
-reworked it in the same commit. That is a refactor of the shadow machinery, and
-half of it is worse than none — I reverted my attempt rather than ship an
-unverified half.
-
-### `4cfd19a` — def-site service injection: confirmed, **not** patched
-
-The other half of the same gap. Upstream's test, ported to
-[`../fuzz/08-defsite-service-injection.mjs`](../fuzz/08-defsite-service-injection.mjs):
+**Validation.** The two probes pass, and the port was checked against upstream's
+own test suite rather than only against my tests: the same 87 core tests, run
+twice, once with the vendored files and once with the ported ones.
 
 ```
-as shipped   qux, which never injects `foo.bar`, still reaches it
-             baz, which does inject it, cannot reach it from a nested context
-upstream     both behave as their `inject` declares
+vendored (as shipped)   10 failed | 77 passed
+ported                   5 failed | 82 passed
 ```
 
-The first line is the one that matters. `inject` is how a plugin declares what it
-depends on; here a service reaches a service it never declared, so the declaration
-stops being a reliable statement of the plugin's dependencies.
+Five fixed, and **no test that passed before fails after**. The five that still
+fail are all `symbols.caller` (#35), which is deliberately out of scope — it is a
+feature rather than a repair, and the logger here uses its own mechanism for the
+same job. The five that now pass:
+
+```
+associated access follows the service fiber          (4cfd19a)
+uses the service shadow for callable extensions      (be7d36e)
+applies the service inject when entered from root
+resolves dependencies through a captured shadow
+strips service shadow before creating plugins
+```
 
 ## Applying
 
