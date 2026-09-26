@@ -19,6 +19,7 @@ found.
 | `04-concurrent-ops.mjs` | **four operations issued back to back with no settle in between** | all of the above, under overlapping transitions |
 | `06-stale-state-after-update.mjs` | one `update()` then a dependency withdrawal | the cached `state` field against `_getState()` |
 | `07-callable-service-shadow.mjs` | a callable service reached through `[Service.extend]()` | upstream's own #37 test, ported — fixed by the shadow port |
+| `15-isolate-realms.mjs` | a service provided inside `ctx.isolate()`, consumed from two realms | cross-realm invisibility — **no divergence**, kept as a guard |
 | `14-js-expression-disabled.mjs` | `disabled: !!js <expr>` on an entry | the expression must be evaluated, not read as truthy — **upstream PR #179** |
 | `13-publication-disposer-order.mjs` | an observer disposing the fiber from inside `internal/plugin` | it must have a disposer and must not activate afterwards — **upstream PR #178** |
 | `12-throwing-teardown-observer.mjs` | a listener on `internal/plugin` that throws during teardown | peers must still run and the disposal must complete — **upstream PR #177** |
