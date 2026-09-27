@@ -66,8 +66,9 @@ The sharp filter is *does the document cite the code under test* — a
 
 Of those, one is already mined (`invariants/i5-loader-transaction.mjs`) and one
 remains unresolved. Full write-up in
-[`doc-corpus-analysis.md`](doc-corpus-analysis.md); the reading schedule for the
-rest is [`reading-plan.md`](reading-plan.md), tracked by
+[`doc-corpus-analysis.md`](doc-corpus-analysis.md); the rest are in
+[`reading-plan.md`](reading-plan.md) — **all 52 read**, each linked to its source in
+`deepseek-ai/deepseek-harness`, grouped by topic and tracked by
 `node reading-status.mjs`.
 
 **This corrects an earlier estimate by an order of magnitude.** The corpus is
