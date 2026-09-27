@@ -1,5 +1,14 @@
 # dsh-cordis-backport
 
+> **This is not an installable DSH plugin.** It ships patches that **modify**
+> `@deepseek-ai/*` vendored sources, for a maintainer to apply to the harness
+> tree — deliberately the opposite of what a marketplace plugin may do. A
+> marketplace listing contract that requires *additive* entry IDs and no
+> replacement of official components cannot accept this repository, and that
+> rejection is correct. See `improvement-opportunities.md` for why the useful
+> path is upstreaming the fixes instead.
+
+
 **English** | [中文](README.zh.md)
 
 An audit of the cordis line vendored into DeepSeek Harness, and backports for the
