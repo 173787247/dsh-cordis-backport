@@ -118,3 +118,22 @@ names core internals (Fiber.update, _setEpoch, internal/plugin) +4
 "2313 篇规格"听起来很多，但**匹配关键词 ≠ 规格相关**。用"文档是否引用被测代码"这条判据，553 篇缩到 2 篇——**两个数量级**。
 
 **同一课这个会话已经上过多次**：分诊器本身也要验证。第一次筛出 52 篇时我以为找到矿了；加一条判据后，矿只有 2 篇。
+
+
+---
+
+## 附：剩下 2360 篇的处置
+
+见 [`findings/19-remaining-corpus-value.md`](findings/19-remaining-corpus-value.md)。
+
+**要点**：
+
+- **1204 篇是中文译本**（1:1 对照），零新内容，不必读
+- 其余多数是**决策记录**（"我们为什么这么做"）——**用来查，不用来通读**
+- **但有 4 篇必须读**，它们讲的是 DSH 怎么看待 **vendor / 依赖 / 测试**——正是本次工作的三个主题：
+  1. `proposed/process/2026-06-11-supply-chain-and-vendor-drift` ★★★ —— **"没有任何东西验证 manifest 的声明"**，提案是"每个改动一个签入的 patch 文件 + 夜间重建 `vendor/`"。**状态仍是 proposed**——而本仓库正是它的手工雏形
+  2. `implemented/architecture/2026-06-13-twin-llm-adapters` ★★★ —— 解释了为什么有两个 LLM 适配器
+  3. `proposed/testing/2026-06-11-mutation-testing` ★★ —— **"覆盖率高不等于断言有效"**，本仓库每次修复的双向验证就是手工变异测试
+  4. `implemented/process/2026-07-26-dependencies-over-hand-rolling` ★★ —— 依赖策略，解释了为什么 fork 了 7 个包
+
+**最重要的结论**：本仓库的四条改善建议里，有三条 DSH 已经写在 `proposed/` 里了——**只是没建**。
