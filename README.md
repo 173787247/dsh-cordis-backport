@@ -37,6 +37,21 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## Two companion studies
+
+- [`dsh-vs-pi-verification.md`](dsh-vs-pi-verification.md) — a point-by-point
+  check of an external comparison between DSH and Pi. Eight claims verified
+  against this machine's installation, three corrected, five marked as not
+  verifiable (everything about Pi itself, which is not present here). The
+  substantive correction: `dsh-llm-pi-ai` is a **design-verification twin** of
+  `dsh-llm-deepseek`, not the LLM foundation — DeepSeek's own models go through
+  DSH's native adapter.
+- [`improvement-opportunities.md`](improvement-opportunities.md) — six directions
+  derived from this audit's actual results, ordered by value. The first is to
+  turn the paper's two properties (revertible effects, reactive coeffects) into
+  an invariant suite run against **both** lines, because every one of the sixteen
+  findings landed on one of those two.
+
 ## How the project is organised
 
 Cordis is not one repository. It is 26 under `cordiverse`, composed into a single
