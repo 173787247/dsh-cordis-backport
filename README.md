@@ -37,6 +37,21 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## `invariants/` — properties from the paper, run against both lines
+
+Everything else here was found by reading code or by fuzzing a suspicion. That
+directory is different: it holds the properties the framework **claims** to have,
+taken from the paper, and asks both lines whether they hold.
+
+```
+15 agreed (0 violated on both), 1 divergent
+```
+
+The divergence is `I2.pending-owner-drains` — upstream PR #175, rediscovered from
+the property rather than from the fuzzer that first found it. See
+[`invariants/README.md`](invariants/README.md), including why the first run's
+three violations were all bad assertions rather than findings.
+
 ## Two companion studies
 
 - [`dsh-vs-pi-verification.md`](dsh-vs-pi-verification.md) — a point-by-point
