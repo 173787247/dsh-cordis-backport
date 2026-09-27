@@ -24,8 +24,10 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 
 /** The two lines, and the bare specifier each publishes cordis under. */
 const LINES = [
-  { key: 'dsh',      label: 'DeepSeek Harness line', root: '/tmp/probe-patched', spec: '@deepseek-ai/cordis' },
-  { key: 'upstream', label: 'cordiverse/cordis',     root: '/tmp/probe-fix',     spec: 'cordis' },
+  { key: 'dsh', label: 'DeepSeek Harness line', root: '/tmp/probe-patched',
+    spec: '@deepseek-ai/cordis', loader: '@deepseek-ai/cordis-plugin-loader' },
+  { key: 'upstream', label: 'cordiverse/cordis', root: '/tmp/probe-fix',
+    spec: 'cordis', loader: '@cordisjs/plugin-loader' },
 ]
 
 function run(cmd, args, cwd) {
@@ -65,8 +67,14 @@ async function main() {
       const dir = join(line.root, '__invariants__')
       await mkdir(join(dir, 'lib'), { recursive: true })
       await cp(join(HERE, 'lib', 'harness.mjs'), join(dir, 'lib', 'harness.mjs'))
-      const src = (await readFile(join(HERE, file), 'utf8')).replaceAll('CORDIS_PKG', line.spec)
+      const src = (await readFile(join(HERE, file), 'utf8'))
+        .replaceAll('CORDIS_PKG', line.spec)
+        .replaceAll('LOADER_PKG', line.loader)
       await writeFile(join(dir, file), src)
+      // scenario-local helpers travel with the scenario
+      if (existsSync(join(HERE, 'mockloader.mjs'))) {
+        await cp(join(HERE, 'mockloader.mjs'), join(dir, 'mockloader.mjs'))
+      }
 
       const { code, out, err } = await run('node', ['--no-warnings', file], dir)
       perLine[line.key] = { parsed: parse(out), code, tail: (err || out).trim().split('\n').pop() }

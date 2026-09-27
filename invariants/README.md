@@ -103,6 +103,25 @@ easy to file them as bugs instead.
 | `i3-realm-boundary.mjs` | spatial | a service is visible exactly within its isolate realm; `inject` drives activation, not visibility |
 | `i4-reclassification.mjs` | spatial | appearing, disappearing and competing providers each drive a fresh classification |
 
+## I5 — from a design document rather than from the paper
+
+The first four files come from the paper. `i5-loader-transaction.mjs` comes from
+a different specification source: DeepSeek Harness publishes its design decisions
+under `.agents/notes/` in its source repository — **2,412 markdown files**, of
+which 52 are `bug-fix` notes touching framework-layer machinery.
+
+`archived/bug-fix/2026-07-20-config-hot-reload-resilience.md` specifies the
+vendored Loader's reload behaviour as an awaited compensating transaction and
+states eight checkable properties. Five became scenarios. **The round produced no
+new confirmed finding**, and the one interesting result is marked INCONCLUSIVE in
+the file rather than reported: the config-restore claim describes a code path
+that could not be located in the vendored source, so the scenario's failure
+cannot yet be attributed to the code.
+
+What the round *did* establish is that the method generalises — a document that
+states what a system must do yields testable properties the same way the paper
+does. 2,412 documents is the size of the remaining surface.
+
 ## Where this should go next
 
 The four files cover the two properties at their simplest. The assertion surface
