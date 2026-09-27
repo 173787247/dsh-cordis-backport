@@ -46,6 +46,36 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## Mining the design-notes corpus
+
+DeepSeek Harness publishes its design decisions under `.agents/notes/` —
+**2,412 documents**. This repository screened them to find any that describe a
+defect in the *vendored framework* rather than in the application built on it:
+
+```
+2412 all documents
+1208 English originals (1204 are .zh.md translations)
+ 553 mention framework concepts        <- too broad; mentioning is not locating
+  52 bug-fix notes touching the framework
+   2 describe a defect in vendored framework code   <- the real filter
+```
+
+The sharp filter is *does the document cite the code under test* — a
+`vendor/README.md` reference, a local modification number, a
+`packages/{core,loader,include,...}/src/` path. **Two of 52 pass.**
+
+Of those, one is already mined (`invariants/i5-loader-transaction.mjs`) and one
+remains unresolved. Full write-up in
+[`doc-corpus-analysis.md`](doc-corpus-analysis.md); the reading schedule for the
+rest is [`reading-plan.md`](reading-plan.md), tracked by
+`node reading-status.mjs`.
+
+**This corrects an earlier estimate by an order of magnitude.** The corpus is
+large but it is mostly about the application, not the framework — which makes
+sense, because the framework divergences are recorded compactly in the vendor
+manifest's 22 entries, and that is where all four reverse-direction findings came
+from.
+
 ## `invariants/` — properties from the paper, run against both lines
 
 Everything else here was found by reading code or by fuzzing a suspicion. That
