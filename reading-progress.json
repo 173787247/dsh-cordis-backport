@@ -10,85 +10,85 @@
   "topic": "preset/bundle",
   "lines": 75,
   "score": 105,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-10-minimal-preset-owns-rl-composition": {
   "topic": "preset/bundle",
   "lines": 41,
   "score": 54,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-03-cli-signal-shutdown-escalation": {
   "topic": "process",
   "lines": 57,
   "score": 50,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-31-code-runtime-python-settlement-fixes": {
   "topic": "tools",
   "lines": 153,
   "score": 48,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-20-plugin-owned-shipped-preset-root": {
   "topic": "preset/bundle",
   "lines": 35,
   "score": 28,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-09-broken-preset-roster-rows": {
   "topic": "preset/bundle",
   "lines": 35,
   "score": 27,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-31-fail-loud-releases-the-terminal": {
   "topic": "tools",
   "lines": 61,
   "score": 26,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-09-filesystem-absence-observation": {
   "topic": "other",
   "lines": 38,
   "score": 21,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-07-ptc-executor-collapse": {
   "topic": "tools",
   "lines": 47,
   "score": 21,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-17-durable-web-queue-recovery": {
   "topic": "tui-web",
   "lines": 54,
   "score": 20,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-24-system-prompt-section-order-ties": {
   "topic": "other",
   "lines": 29,
   "score": 18,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-13-oauth-only-providers-withheld": {
   "topic": "other",
   "lines": 47,
   "score": 18,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-03-hmr-initial-scan-boot-deadlock": {
   "topic": "process",
@@ -101,266 +101,266 @@
   "topic": "tui-web",
   "lines": 29,
   "score": 15,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-18-tool-row-file-open-failure": {
   "topic": "tools",
   "lines": 35,
   "score": 15,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-03-user-owned-goal-pause-activation": {
   "topic": "other",
   "lines": 36,
   "score": 14,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-05-session-reference-spill-reuse": {
   "topic": "session",
   "lines": 42,
   "score": 13,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-13-bounded-cold-blank-verification": {
   "topic": "other",
   "lines": 37,
   "score": 11,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-26-question-drafts-survive-session-switch": {
   "topic": "session",
   "lines": 41,
   "score": 11,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-30-tui-adapter-registration-race": {
   "topic": "tui-web",
   "lines": 31,
   "score": 11,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-12-onboarding-reads-every-provider": {
   "topic": "other",
   "lines": 40,
   "score": 9,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-06-host-backed-web-preferences": {
   "topic": "tui-web",
   "lines": 44,
   "score": 9,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-10-child-agents-join-their-parent-preset": {
   "topic": "preset/bundle",
   "lines": 60,
   "score": 9,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-04-busy-send-button-follows-enter-setting": {
   "topic": "tui-web",
   "lines": 36,
   "score": 9,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-30-web-transcript-log-ordered-projection": {
   "topic": "tui-web",
   "lines": 80,
   "score": 8,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-02-goal-round-wrapup-message": {
   "topic": "other",
   "lines": 33,
   "score": 6,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-05-session-reference-model-budget": {
   "topic": "session",
   "lines": 26,
   "score": 6,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-26-stable-turn-process-order": {
   "topic": "session",
   "lines": 31,
   "score": 4,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-06-onboarding-step-owned-takeover-chrome": {
   "topic": "other",
   "lines": 37,
   "score": 3,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-10-slash-catalog-follows-preset-switch": {
   "topic": "preset/bundle",
   "lines": 45,
   "score": 3,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-24-empty-model-response-is-retryable": {
   "topic": "other",
   "lines": 38,
   "score": 2,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-27-tui-step-timing-trails-tool-cards": {
   "topic": "tui-web",
   "lines": 30,
   "score": 2,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-28-web-gui-feedback-loop": {
   "topic": "tui-web",
   "lines": 41,
   "score": 1,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-22-pi-ai-transport-truncation-classification": {
   "topic": "other",
   "lines": 37,
   "score": 1,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-24-exited-holder-lock-takeover": {
   "topic": "process",
   "lines": 52,
   "score": 1,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-06-api-key-format-validation": {
   "topic": "other",
   "lines": 103,
   "score": -3,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-06-reader-scroll-attribution-observed-top-ledger": {
   "topic": "tui-web",
   "lines": 39,
   "score": -4,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-11-owned-run-finish-reason": {
   "topic": "other",
   "lines": 35,
   "score": -5,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-29-code-runtime-python-call-backlog-and-binding-metadata-snapshot": {
   "topic": "tools",
   "lines": 72,
   "score": -5,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-31-web-stop-preserves-queue": {
   "topic": "tui-web",
   "lines": 39,
   "score": -5,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-20-turn-error-survives-same-turn-retry-history": {
   "topic": "session",
   "lines": 33,
   "score": -5,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-07-cancel-convergence-wake-latch": {
   "topic": "other",
   "lines": 30,
   "score": -5,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-05-continuous-client-recovery": {
   "topic": "other",
   "lines": 38,
   "score": -5,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-07-29-human-transcript-append-origin": {
   "topic": "session",
   "lines": 55,
   "score": -8,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-29-windows-atomic-replace-retry": {
   "topic": "other",
   "lines": 29,
   "score": -9,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-16-movable-mandatory-update-window": {
   "topic": "other",
   "lines": 25,
   "score": -21,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-03-hidden-windows-subprocess-windows": {
   "topic": "process",
   "lines": 31,
   "score": -35,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-22-windows-open-through-shell-resolution": {
   "topic": "other",
   "lines": 44,
   "score": -39,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-09-07-win32-picker-foreground-alt-key": {
   "topic": "tui-web",
   "lines": 26,
   "score": -45,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-10-pre-plugin-theme-bootstrap": {
   "topic": "tui-web",
   "lines": 39,
   "score": -52,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  },
  "2026-08-12-fix-pwsh-terminal-overlay-dup": {
   "topic": "tools",
   "lines": 57,
   "score": -57,
-  "status": "pending",
-  "note": ""
+  "status": "done",
+  "note": "read 2026-09-27: application-level, no framework defect"
  }
 }
