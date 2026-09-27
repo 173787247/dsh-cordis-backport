@@ -46,6 +46,22 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## One of these was already proposed upstream
+
+`improvement-opportunities.md` recommends a vendor drift check. **DeepSeek Harness
+had already written that proposal themselves** —
+`proposed/process/2026-06-11-supply-chain-and-vendor-drift.md`, still unimplemented:
+
+> nothing verifies the manifest's *claims*: that `vendor/` actually equals
+> upstream-at-SHA plus exactly the logged modifications … the log entries become
+> **verifiable artifacts rather than prose**.
+
+`backport/*.patch` is the "checked-in patch file per modification" half of that,
+and the probes are the comparison half. The proposal names its own blocker —
+*"upstream repos are private mirrors; CI credentials are the main friction"* —
+which **does not apply to `cordis` and `loader`**, the two packages that come from
+the public `cordiverse/cordis` and the two that matter most for upstream sync.
+
 ## Mining the design-notes corpus
 
 DeepSeek Harness publishes its design decisions under `.agents/notes/` —

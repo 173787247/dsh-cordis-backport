@@ -2,6 +2,25 @@
 
 基于本次审计的实际结果（16 个发现、15 个上游 PR、16 个 DSH 回移补丁、一份架构调研）反推出来的可执行建议。
 
+> **更正（2026-09-27，写完本文档之后）**
+>
+> 本文档把"上游同步监控"和"缩小 fork 面"作为建议提出。**后来我读到 DSH 自己的 `.agents/notes/`，发现他们已经把同一件事写成了提案：**
+>
+> **`proposed/process/2026-06-11-supply-chain-and-vendor-drift.md`**
+>
+> > The vendor manifest is enforced at commit time in the *forward* direction (vendored change ⇒ manifest update) but **nothing verifies the manifest's *claims***: that `vendor/` actually equals upstream-at-SHA plus exactly the logged modifications.
+> >
+> > **Vendor drift check**（夜间 CI）：在 manifest 的 SHA 上浅克隆上游、与 `vendor/*/src` 比对；**除非差异正好等于已记录的本地改动否则失败——改动以「每个改动一个签入的 patch 文件」保存，让日志条目变成可验证的产物而不是散文。**
+>
+> **状态：`proposed`——未实施。**
+>
+> **所以本文档的方向一（不变量套件）和二（日志结构化）不是新建议，是这个提案的手工版本。** 差别在于本仓库有跑得起来的结果。
+>
+> **而我在提案里能补的一点**：它自称的障碍是*"上游仓库是私有镜像，CI 凭据是主要摩擦"*。**但 `cordis` 和 `loader` 来自公开的 `cordiverse/cordis`**，manifest 已钉死 SHA（`56b3d4f`）——**这两半的 drift 检查不需要任何凭据**，而它们恰是上游同步最要紧的两个包。
+>
+> 详见 [`findings/19-remaining-corpus-value.md`](findings/19-remaining-corpus-value.md)。
+
+
 每条给出**依据 → 提案 → 成本 → 收益**。按我判断的价值排序。
 
 ---
