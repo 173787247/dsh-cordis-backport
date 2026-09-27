@@ -94,8 +94,8 @@
   "topic": "process",
   "lines": 43,
   "score": 16,
-  "status": "in-progress",
-  "note": "vendored-framework defect"
+  "status": "done",
+  "note": "→ findings/17：不是上游缺陷，两条线都收敛"
  },
  "2026-07-24-tui-turn-end-stop-reason-notices": {
   "topic": "tui-web",
