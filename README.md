@@ -47,8 +47,22 @@ cordis is built by something built on cordis.
 DeepSeek Harness does not simply vendor that: it **forks seven of the nine
 packages** plus the two foundation libraries, because `volatile` spans all of them
 and upstream would never take a `cosmokit` change for it. Only `core` and `loader`
-still follow `cordiverse/cordis` — which is why nearly every fix in this repository
-lands in one of those two.
+still follow `cordiverse/cordis`, and those two are where this repository's work
+converged: **nine of the fifteen upstream pull requests** are in them
+(`core` #175–#178, `loader` #165 #166 #167 #172 #179).
+
+The other six are worth knowing about, because they are not equally useful here:
+
+| PR | package | relevant to the vendored line? |
+|---|---|---|
+| #168, #170 | `hmr` | **no** — `hmr` is not vendored |
+| #173 | `create` | **no** — `create` is not vendored |
+| #164 | build script | **no** — different build |
+| #171, #174 | `include` | partly — the line forks `include`, so upstream changes there do not flow in |
+
+So the earlier framing ("nearly every fix lands in core and loader") was wrong in
+both directions: it overstated the share, and it hid three pull requests that are
+for packages this line does not ship at all.
 
 Written up in [`architecture.md`](architecture.md).
 
