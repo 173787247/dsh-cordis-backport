@@ -37,6 +37,21 @@ upstream `cordis@4.0.0-rc.10`, with nothing else changed. Probes are in [`probes
 | [`1c1a10e`](https://github.com/cordiverse/cordis/commit/1c1a10e) (#51) | `cordis/src/events.ts` | `ctx.on('toString', …)` threw `hooks[method] is not a function` → registers |
 | [`fd96b0a`](https://github.com/cordiverse/cordis/commit/fd96b0a) (#36) | `cordis/src/logger.ts` | a held `ctx.logger.buffer` grew past its bound instead of staying put → stays bounded |
 
+## How the project is organised
+
+Cordis is not one repository. It is 26 under `cordiverse`, composed into a single
+workspace through a gitignored `external/` directory, with a **bootstrapping
+toolchain** — `yakumo` manages the workspace and is itself a cordis CLI plugin, so
+cordis is built by something built on cordis.
+
+DeepSeek Harness does not simply vendor that: it **forks seven of the nine
+packages** plus the two foundation libraries, because `volatile` spans all of them
+and upstream would never take a `cosmokit` change for it. Only `core` and `loader`
+still follow `cordiverse/cordis` — which is why nearly every fix in this repository
+lands in one of those two.
+
+Written up in [`architecture.md`](architecture.md).
+
 ## The upstream pull requests
 
 Eleven are open against `cordiverse/cordis`. They apply cleanly in any order — no
