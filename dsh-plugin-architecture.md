@@ -29,17 +29,48 @@ dsh-wsl-common/lib/wsl-host.js          7ab22bf5be   ← 规范源
         │
         │  dsh-wsl-kit/scripts/sync-wsl-common.mjs
         ▼
-25 个 dsh-wsl-* 插件的 lib/wsl-host.js   7ab22bf5be   ✓ 一致
- dsh-wsl-obsidian/lib/wsl-host.js        838a7bc691   ★ 已漂移
+26 个 dsh-wsl-* 插件的 lib/wsl-host.js   7ab22bf5be   ✓ 全部一致
 ```
 
-26 份副本，**2 个版本**。`dsh-wsl-common` 不是被依赖的包，是**源头**；
+**26 份副本，内容完全相同。** `dsh-wsl-common` 不是被依赖的包，是**源头**；
 插件各持一份拷贝，靠脚本同步。只有 `dsh-device-bridge` 与 `dsh-mac-companion`
 真正 `import` 了其中的 `companion_client`。
 
-**`dsh-wsl-obsidian` 那一份没同步上** —— 它的头注释仍写着
-"Canonical copy — sync to plugins via dsh-wsl-kit/scripts/sync-wsl-common.mjs"，
-说明它是从源头拷出来的，但之后源头变了而它没跟上。
+### 一处更正
+
+早先的记录说 `dsh-wsl-obsidian` 的副本"漂移"了，因为 `md5` 不同
+（`838a7bc691` vs `7ab22bf5be`）。**那是换行符差异，不是内容差异**：
+obsidian 那份 1881 字节里有 57 个 CR，规范版 1824 字节有 0 个，
+去掉 CR 后两份逐字节相同，5 个导出函数一个不差。
+
+原因是 obsidian 装成 `link:` 指向 `/mnt/c/…`，Windows 侧的文件带 CRLF。
+
+## 二·补、CRLF 的实际分布
+
+`link:` 装的 12 个里有 5 个带 CRLF（也都是 `/mnt/c` 上的）：
+
+| 插件 | 带 CRLF | 含 shell 脚本 | 会被插件执行 |
+|---|---:|---|---|
+| `dsh-wsl-jev` | 17/18 | 是，`scripts/` 下 8 个 | 否 |
+| `dsh-wsl-im` | 14/33 | 是，6 个 | 否 |
+| `dsh-remote-ssh` | 11/12 | 否 | — |
+| `dsh-wsl-obsidian` | 9/9 | 否 | — |
+| `dsh-device-bridge` | 8/8 | 否 | — |
+
+**`.js` 带 CRLF 对 Node 无害**，这些插件都正常工作。
+`scripts/*.sh` 里的 CRLF 只在你手动 `bash scripts/xxx.sh` 时才会失败
+（`set -o pipefail\r` → `command not found`）。
+两个插件都没有从 JS 里 spawn 这些脚本，package.json 也没挂。
+
+**严重度低，影响面是运维脚本，不是插件运行时。**
+
+### 测量方法的一处更正
+
+判断"某插件有没有 .sh"时，`find "$P/$r" -name '*.sh'`、`grep -r --include='*.sh'`
+都会给出错误的空结果或错误计数：**`link:` 装的包在 `node_modules` 里是符号链接，
+`find` 默认不跟进，`grep -r` 的行为也不一致。** 需要 `find -L` 或
+`readlink -f` 先解析真实路径。本节的数字来自 `_shared/crlf-survey.mjs`
+（用 `readdirSync` + `statSync`，会跟进链接），并用 `find -L` 复核过。
 
 ## 三、装入方式
 
