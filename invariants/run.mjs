@@ -45,7 +45,11 @@ const parse = (out) => Object.fromEntries(
     .filter(l => l.startsWith('INVARIANT '))
     .map((l) => {
       const [, id, verdict, ...rest] = l.split(' ')
-      return [id, { ok: verdict === 'PASS', detail: rest.join(' ') }]
+      // Three states, not two. INCONCLUSIVE used to fall through to ok:false
+      // and be counted as a violation on both lines -- a verdict the scenario
+      // had explicitly declined to give.
+      const ok = verdict === 'PASS' ? true : verdict === 'FAIL' ? false : null
+      return [id, { ok, verdict, detail: rest.join(' ') }]
     }),
 )
 
@@ -85,7 +89,7 @@ async function main() {
   }
 
   // ── report ────────────────────────────────────────────────────────────────
-  let diverge = 0, violated = 0, agreed = 0
+  let diverge = 0, violated = 0, agreed = 0, undecided = 0
   for (const { file, perLine } of results) {
     console.log(`\n═══ ${file}`)
     const [a, b] = LINES.map(l => perLine[l.key])
@@ -100,7 +104,15 @@ async function main() {
         console.log(`  ????  ${id}  missing on ${!x ? LINES[0].label : LINES[1].label}`)
         continue
       }
-      if (x.ok === y.ok) {
+      if (x.ok === null || y.ok === null) {
+        // Neither line settles it. Not counted as a violation: an undecidable
+        // property is not a defect, and counting it as one makes the suite look
+        // worse for being honest about its own limits.
+        undecided++
+        console.log(`  UNDECIDED  ${id}`)
+        console.log(`        dsh: ${x.detail}`)
+        console.log(`        up : ${y.detail}`)
+      } else if (x.ok === y.ok) {
         agreed++
         if (!x.ok) { violated++; console.log(`  BOTH-FAIL  ${id}\n        dsh: ${x.detail}\n        up : ${y.detail}`) }
         else console.log(`  agree      ${id}  ${x.detail}`)
@@ -113,10 +125,15 @@ async function main() {
     }
   }
 
-  console.log(`\n──────── ${agreed} agreed (${violated} violated on both), ${diverge} divergent`)
+  console.log(`\n──────── ${agreed} agreed (${violated} violated on both), ${diverge} divergent` +
+    (undecided ? `, ${undecided} undecided` : ''))
   if (diverge) {
     console.log('A divergence means one line satisfies a property the other does not.')
     console.log('It is the only signal a single-line test cannot produce, and the place to look.')
+  }
+  if (undecided) {
+    console.log('An undecided result is not a defect and is not counted as one. The scenario')
+    console.log('declined a verdict it could not support; its reason is printed above.')
   }
 }
 

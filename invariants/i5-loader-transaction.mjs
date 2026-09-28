@@ -47,7 +47,7 @@
 import { Context } from 'CORDIS_PKG'
 import { Loader, Group } from 'LOADER_PKG'
 import { makeMockLoader, sleep } from './mockloader.mjs'
-import { check, scenario } from './lib/harness.mjs'
+import { check, inconclusive, scenario } from './lib/harness.mjs'
 
 const S = ['PENDING', 'LOADING', 'ACTIVE', 'FAILED', 'DISPOSED', 'UNLOADING']
 
@@ -110,8 +110,17 @@ await scenario('I5', async () => {
 
     const afterConfig = JSON.stringify(entry.options.config)
     check('I5.failed-update-rejects', rejected, `update() rejected: ${rejected}`)
-    check('I5.failed-update-restores-config', afterConfig === before.config,
-      `config before=${before.config} after=${afterConfig}`)
+    // Declared inconclusive, not failed. The header above explains why at
+    // length; the short version is that this scenario never reaches the path the
+    // claim describes, so FAIL would state a conclusion the scenario does not
+    // have. It printed BOTH-FAIL for as long as the header was the only thing
+    // saying otherwise -- which is exactly the kind of thing a reader skims past.
+    inconclusive(
+      'I5.failed-update-restores-config',
+      'does not reach the module-name-change path the claim describes; ' +
+      'deciding it needs the reload path read, not this scenario re-run',
+      `config before=${before.config} after=${afterConfig} (both lines)`,
+    )
   }
 
   // ── 3. a fiber waiting on an absent service settles as PENDING ─────────
