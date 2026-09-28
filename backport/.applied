@@ -1,0 +1,44 @@
+applied: 2026-09-28 22:58:15
+target:  ~/.local/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/
+backup:  ~/.dsh/cordis-backup-20260928_225815
+rollback: /tmp/rollback-cordis.sh  (或从上面的 backup 目录 cp 回)
+
+校验和
+  打补丁前            打补丁后
+  cordis               43e7e5c5  →  2e0212db
+  cordis-plugin-loader 3e2e273b  →  c7481dcc
+  cordis-plugin-timer  c651cbea  →  076b367b
+
+  ★ 打补丁后的三个校验和，与审计时的 /tmp/probe-patched 逐字节一致
+    → 证明这三个补丁正是产出那条被审计的线的东西，没有别的变量
+
+差分（九个不变量，同一命令，只改目标目录）
+  打补丁前  15 agreed (0 violated), 1 divergent    i5 崩溃：5 项 missing
+  打补丁后  19 agreed (0 violated), 1 divergent, 1 undecided
+
+  ★ i5 场景从【进程被打死】→【全部通过】
+  ★ 具体是 I5.failed-update-rejects: agree, update() rejected: true
+    —— 插件在 update 时抛异常，线上让异常逃逸成 unhandled rejection
+       打死进程；补丁后 update() 干净地 reject，调用方接得住
+
+生效时机
+  ★ 补丁只影响【新启动的进程】—— Node 把已加载的模块缓存在内存里。
+    当前 dsh web 不受影响，下次重启时加载补丁版。
+    这是有意的：不为验证而打断会话，而不重启就是零影响。
+
+重启验证（2026-09-28 23:01:40，已做）
+  dsh web  pid 11487 → 12165（自重启，detached 路径）
+  token     → UbgTRg…
+  端口      3080/3081 均 401
+  单元日志  Result=success, "== opening http://127.0.0.1:3081/?token=…"
+  九个不变量对【运行中】的进程: 19 agreed (0 violated), 1 divergent, 1 undecided
+            ★ 与验证环境逐项一致 —— 补丁在真进程里生效
+  PATH      /mnt/c 五条，今早那个修复保持住了
+
+  → 原来那条"重启后仍是推断"【已消除】
+
+仍未验证的部分（诚实记录）
+  · cordis 包自带测试为空（scripts: {}），所以九个不变量是它的【全部】测试
+  · 没有跑过真实的 DSH 插件在 update 时抛异常的端到端场景
+    （i5 用的是 loader.mock 造的插件，不是真插件）
+  · 这是【首次】在打了补丁的 dsh 上跑长时间会话；目前 4 分钟，无异常

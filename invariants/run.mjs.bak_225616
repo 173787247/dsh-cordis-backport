@@ -24,7 +24,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 
 /** The two lines, and the bare specifier each publishes cordis under. */
 const LINES = [
-  { key: 'dsh', label: 'DeepSeek Harness line', root: process.env.DSH_LINE_ROOT ?? '/tmp/probe-patched',
+  { key: 'dsh', label: 'DeepSeek Harness line', root: '/tmp/probe-patched',
     spec: '@deepseek-ai/cordis', loader: '@deepseek-ai/cordis-plugin-loader' },
   { key: 'upstream', label: 'cordiverse/cordis', root: '/tmp/probe-fix',
     spec: 'cordis', loader: '@cordisjs/plugin-loader' },
