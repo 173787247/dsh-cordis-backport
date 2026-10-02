@@ -68,7 +68,24 @@ EOF
     -f sha="$head" >/dev/null 2>&1 || true
 
   blob=$(gh api "repos/$FORK/git/blobs" -f content="$(cat "$WORK.yml")" -f encoding=utf-8 --jq .sha)
-  base=$(gh api "repos/$FORK/git/commits/submit-${p}" --jq .sha 2>/dev/null || echo "$head")
+  # A value only when the API actually returned a sha. `gh api` prints the error
+  # body on STDOUT and exits non-zero, so `$(gh api ... || echo fallback)` yields
+  # the error JSON CONCATENATED with the fallback -- and the trees endpoint then
+  # rejects the whole string as "base_tree is not a valid tree oid". That happens
+  # on the first run for any plugin, because its submit-<plugin> branch does not
+  # exist yet. Guard on the shape instead of on the exit status.
+  #
+  # base_tree wants a tree sha; a commit sha happens to be accepted too, so the
+  # fallback below is the head commit and that is fine.
+  only_sha() {
+    local v
+    v=$(gh api "$1" --jq "${2:-.sha}" 2>/dev/null) || true
+    [[ "$v" =~ ^[0-9a-f]{40}$ ]] && printf '%s' "$v"
+  }
+  base_commit=$(only_sha "repos/$FORK/git/commits/submit-${p}")
+  base_commit=${base_commit:-$head}
+  base=$(only_sha "repos/$FORK/git/commits/$base_commit" .tree.sha)
+  base=${base:-$head}
   tree=$(gh api "repos/$FORK/git/trees" -f base_tree="$base" \
     -f "tree[][path]=$file" -f "tree[][mode]=100644" \
     -f "tree[][type]=blob" -f "tree[][sha]=$blob" --jq .sha)
