@@ -81,6 +81,10 @@ EOF
     local v
     v=$(gh api "$1" --jq "${2:-.sha}" 2>/dev/null) || true
     [[ "$v" =~ ^[0-9a-f]{40}$ ]] && printf '%s' "$v"
+    # 必须显式返回 0：函数体最后一条命令的退出码就是函数的退出码，
+    # 正则不匹配时它是 1，而调用处是 x=$(only_sha ...) —— 赋值会继承这个 1，
+    # 在 set -e 下直接终止整个脚本（症状是零输出、退出码 1）。
+    return 0
   }
   base_commit=$(only_sha "repos/$FORK/git/commits/submit-${p}")
   base_commit=${base_commit:-$head}
