@@ -34,3 +34,21 @@ transfer/notify path it guards is unreachable through the public surface. That i
 worth knowing before anyone "simplifies" it — but it is not a defect anyone can
 demonstrate today, and no test was added: a test that passes on both the real
 code and the mutation proves nothing.
+
+## The second survivor is dead code, not a gap
+
+`Realm.access(key, create = false)` has two branches: `create` memoises a symbol
+into the realm store, and the default returns a transient one. The loader's wrapper
+(`access(entry, name, create = false)`) is called exactly **once**, at
+`patch-context` step 1, and always with `create = true`:
+
+```ts
+newMap[name] = access(entry, name, true)
+```
+
+So the `create = false` branch — and the wrapper's `else realm = realms[label]`
+branch that goes with it — cannot be reached from the loader at all. The mutation
+that made it write into the store changed nothing because nothing calls it. This is
+worth knowing for a different reason than the marker: the two `access` overloads
+suggest a read-only probe that the loader never performs, so a future caller would
+be the first to exercise that branch.
