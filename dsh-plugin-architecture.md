@@ -36,7 +36,7 @@
 
 早先还写过 `dsh-wsl-obsidian` 的 `wsl-host.js`「漂移」了。**那是换行符差异：**
 obsidian 那份 1881 字节含 57 个 CR，规范版 1824 字节含 0 个；去掉 CR 后两份
-逐字节相同，5 个导出函数一个不差。原因就是它是 `link:` 到 `/mnt/c` 的安装。
+逐字节相同，5 个导出函数一个不差。原因就是它是 `link:` 到 Windows 盘（`<windows-drive>`）的安装。
 
 ## 三、共享代码是复制分发
 
@@ -58,7 +58,7 @@ dsh-wsl-common/lib/wsl-host.js         1824 字节   ← 规范源
 
 ## 四、磁盘上的 CRLF 实测
 
-`link:` 装的 12 个里有 5 个带 CRLF，都在 `/mnt/c` 上：
+`link:` 装的 12 个里有 5 个带 CRLF，都在 Windows 盘（`<windows-drive>`）上：
 
 | 插件 | 带 CRLF | 含 shell 脚本 | 会被插件执行 |
 |---|---:|---|---|
