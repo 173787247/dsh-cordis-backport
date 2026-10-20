@@ -56,6 +56,16 @@ Probe: [`probes/09-persist-order.mjs`](../probes/09-persist-order.mjs).
 
 ## What this means for the patches in `backport/`
 
-`cordis-plugin-loader-1.0.5.patch` names its version in the filename and was cut
-against 1.0.5. Against 1.0.6 it has to be re-checked before applying — the #167 hunk
-in particular, since its surrounding reconcile code is what changed.
+`cordis-plugin-loader-1.0.5.patch` named its version in the filename and was cut against
+1.0.5. Against 1.0.6 two of its hunks fail on context drift (the vendored `_init()` renamed
+`exports` to `moduleNamespace`), so it was **re-cut as
+`cordis-plugin-loader-1.0.6.patch`** — the two hunks re-expressed by hand, the rest applying
+unchanged.
+
+Verified by running `probes/08` and `probes/09` against a copy of the patched 1.0.6 package:
+the group reconcile ends with `["baz"]`, and a vetoed update leaves the entry at its old
+value. Both defects the patch addresses are gone.
+
+The other two patches are now **already applied** on the shipped line: every hunk of
+`cordis-4.0.4.patch` and `cordis-plugin-timer-1.1.6.patch` reports as present against
+`4.0.5` / `1.1.7`.

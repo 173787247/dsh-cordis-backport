@@ -2,14 +2,22 @@
 
 **English** | [中文](README.zh.md)
 
-Sixteen fixes for the vendored cordis line: twelve upstream commits it has not taken, plus four loader defects confirmed present here by the same probes, as patches against
-`@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`.
+Sixteen fixes for the vendored cordis line: twelve upstream commits it has not taken, plus four loader defects confirmed present here by the same probes.
 
-| patch | package | hunks |
-|---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 25 |
-| `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 21 |
-| `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
+The shipped line has moved since these were cut. Against what it ships now
+(`4.0.5` / loader `1.0.6` / timer `1.1.7`) two of the three patches are **already
+applied** — `cordis-4.0.4.patch` and `cordis-plugin-timer-1.1.6.patch` report every
+hunk as already present, which is the expected shape once the line takes them. The
+loader patch did not apply: it was re-cut against `1.0.6` (the vendored `_init()` renamed
+`exports` to `moduleNamespace`, and the two hunks that touch it had to be re-expressed by
+hand). The re-cut patch is verified by running `probes/08` and `probes/09` against it —
+both defects it addresses are gone.
+
+| patch | against | hunks | on the shipped line |
+|---|---|---|---|
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 25 | already applied (`4.0.5`) |
+| `cordis-plugin-loader-1.0.6.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.6` | 21 | applies cleanly; probe-verified |
+| `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 | already applied (`1.1.7`) |
 
 Each patch touches `src/*.ts` **and** `lib/index.js`. The `exports` map resolves to
 the bundle, so changing `src` alone does not change what runs. The `src` half is what

@@ -2,13 +2,18 @@
 
 [English](README.md) | **中文**
 
-上游已修、但 vendor 这条 cordis 线尚未跟进的六个 bug，以补丁形式给出，针对
-`@deepseek-ai/*@4.0.4` / `1.0.5` / `1.1.6`。
+上游已修、但 vendor 这条 cordis 线尚未跟进的 bug，以补丁形式给出。
+
+**装机的这条线已经往前走了**（现为 `4.0.5` / loader `1.0.6` / timer `1.1.7`）：
+`cordis-4.0.4.patch` 与 `cordis-plugin-timer-1.1.6.patch` 的每个 hunk 在新版本上都是
+**already applied**（说明这条线已经收下了它们）；loader 的补丁**不能直接套** —— 已按
+`1.0.6` 重切（`_init()` 把 `exports` 改名为 `moduleNamespace`，因此有两个 hunk 需要重写）。
+重切后的补丁用 `probes/08` 与 `probes/09` 验证：两条缺陷都不再复现。
 
 | 补丁 | 包 | hunk |
 |---|---|---|
 | `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 8 |
-| `cordis-plugin-loader-1.0.5.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.5` | 13 |
+| `cordis-plugin-loader-1.0.6.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.6` | 21 |
 | `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 |
 
 每个补丁**同时改了 `src/*.ts` 和 `lib/index.js`**。因为这些包的 `exports` 映射指向打包产物，
@@ -50,7 +55,7 @@
 ```bash
 cd <dsh 安装路径>/node_modules/@deepseek-ai
 
-for f in cordis-4.0.4 cordis-plugin-loader-1.0.5 cordis-plugin-timer-1.1.6; do
+for f in cordis-4.0.4 cordis-plugin-loader-1.0.6 cordis-plugin-timer-1.1.6; do
   git apply --check /path/to/$f.patch && git apply /path/to/$f.patch
 done
 ```

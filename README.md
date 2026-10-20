@@ -285,7 +285,7 @@ my own invariants, which [`fuzz/README.md`](fuzz/README.md) records.
 ## Backports
 
 [`backport/`](backport) holds three patches — `cordis@4.0.4`,
-`cordis-plugin-loader@1.0.5`, `cordis-plugin-timer@1.1.6` — covering all six.
+`cordis-plugin-loader@1.0.6` (re-cut against the shipped line), `cordis-plugin-timer@1.1.6` — covering all six.
 They apply cleanly to untouched 4.0.4 sources and were verified the same way the
 audit was: probe before, probe after.
 

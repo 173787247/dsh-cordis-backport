@@ -53,7 +53,7 @@ DeepSeek Harness 用的是 `@deepseek-ai/cordis@4.0.4` 及其插件包，而不�
 
 ## 回移补丁
 
-[`backport/`](backport) 里有三个补丁——`cordis@4.0.4`、`cordis-plugin-loader@1.0.5`、`cordis-plugin-timer@1.1.6`——覆盖上面全部六条。它们能**干净应用于未改动的 4.0.4 源码**，验证方式与审计相同：补丁前跑一次探针，补丁后再跑一次。
+[`backport/`](backport) 里有三个补丁——`cordis@4.0.4`、`cordis-plugin-loader@1.0.6`（按装机版本重切）、`cordis-plugin-timer@1.1.6`——覆盖上面全部六条。它们能**干净应用于未改动的 4.0.4 源码**，验证方式与审计相同：补丁前跑一次探针，补丁后再跑一次。
 
 注意每个补丁**同时改了 `src/*.ts` 和 `lib/index.js`**。因为这些包的 `exports` 指向打包产物，只改 `src` 不会改变实际运行行为；两半都给，**你们不重新构建就能直接验证**。
 
