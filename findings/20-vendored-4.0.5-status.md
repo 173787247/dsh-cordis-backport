@@ -42,8 +42,17 @@ holds them either. The failure is silent: nothing throws, the group entries stay
 ### #165 (persist entry config only after a committed update): still present
 
 `cordis-plugin-loader@1.0.6` uses the pre-`internal/commit` event shape — the update
-listener assigns `entry.options.config` and writes the tree **before** calling
-`next()`, which is exactly the code #165 objects to.
+listener is registered with `prepend: true` and assigns `entry.options.config` and
+writes the tree **before** calling `next()`, which is exactly the code #165 objects to.
+Being prepended, a downstream listener cannot veto it in time:
+
+```
+initial   entry config = {"a":1}
+veto      vetoed
+after     entry config = {"a":3}      ← the vetoed value is already persisted
+```
+
+Probe: [`probes/09-persist-order.mjs`](../probes/09-persist-order.mjs).
 
 ## What this means for the patches in `backport/`
 

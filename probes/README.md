@@ -12,6 +12,7 @@ scripts' output.
 | `04-interval-waiters.mjs` | `cb77029` (#53) — concurrent `interval().next()` waiters never settle |
 | `05-06-hooks-and-buffer.mjs` | `1c1a10e` (#51) and `fd96b0a` (#36) |
 | `08-group-reconcile-entries.mjs` | #167 against the shipped line — the surviving entries are dropped, not merely stale |
+| `09-persist-order.mjs` | #165 against the shipped line — a vetoed update has already been written to the entry and the tree |
 | `mockloader.mjs` / `mockloader-shim.mjs` | `MockLoader` for `01` and `04`, ported to each side's package names |
 
 ## Running them
