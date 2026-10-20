@@ -11,6 +11,7 @@ scripts' output.
 | `03-waterfall-twice.mjs` | `5b195b3` (#44) — a listener reaching `next()` twice runs the chain again |
 | `04-interval-waiters.mjs` | `cb77029` (#53) — concurrent `interval().next()` waiters never settle |
 | `05-06-hooks-and-buffer.mjs` | `1c1a10e` (#51) and `fd96b0a` (#36) |
+| `08-group-reconcile-entries.mjs` | #167 against the shipped line — the surviving entries are dropped, not merely stale |
 | `mockloader.mjs` / `mockloader-shim.mjs` | `MockLoader` for `01` and `04`, ported to each side's package names |
 
 ## Running them

@@ -16,7 +16,7 @@ Checking the fourteen:
 |---|---|
 | #165 persist entry config only after a committed update | **has the defect** — assigns `entry.options.config` and writes the tree before `next()` |
 | #166 prevent duplicate init when import fails | **has the defect** — probe-confirmed, see `probes/07-duplicate-init.mjs` |
-| #167 remove then create when reconciling a group | **has the defect** — the same unordered `Promise.all` |
+| #167 remove then create when reconciling a group | **has the defect** — the same unordered `Promise.all`; on the shipped 1.0.6 the outcome is worse than upstream (the surviving entries are dropped, not merely stale) — `probes/08-group-reconcile-entries.mjs` |
 | #172 reject entry ids containing the tree separator | **has the defect** — `ensureId` accepts an id containing `:` |
 | #171 only treat ENOENT as a missing file | already correct — local modification 8 |
 | #173 leave an unreadable `.yarnrc.yml` alone | not applicable — the `create` package is not vendored |

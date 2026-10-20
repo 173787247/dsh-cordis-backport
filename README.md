@@ -196,6 +196,10 @@ Checking my fourteen upstream PRs against it turned up four more:
 `#165`, `#166`, `#167` and `#172` **all apply here too**. See
 [`my-prs-vs-dsh.md`](my-prs-vs-dsh.md).
 
+That check was run against `4.0.4` / loader `1.0.5`. The shipped line has since moved
+to `4.0.5` / loader `1.0.6`: one of the four is in, one got worse. See
+[`findings/20-vendored-4.0.5-status.md`](findings/20-vendored-4.0.5-status.md).
+
 ## One that runs the other way
 
 Not every divergence here is a fix upstream has and this line lacks. The
