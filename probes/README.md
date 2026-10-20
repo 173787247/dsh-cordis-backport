@@ -13,6 +13,7 @@ scripts' output.
 | `05-06-hooks-and-buffer.mjs` | `1c1a10e` (#51) and `fd96b0a` (#36) |
 | `08-group-reconcile-entries.mjs` | #167 against the shipped line — the surviving entries are dropped, not merely stale |
 | `09-persist-order.mjs` | #165 against the shipped line — a vetoed update has already been written to the entry and the tree |
+| `10-plugin-wrapper-fields.mjs` | `752dbee` (#40) — the `Object.create(fiber)` wrapper must not keep a stale copy of the lifecycle fields |
 | `mockloader.mjs` / `mockloader-shim.mjs` | `MockLoader` for `01` and `04`, ported to each side's package names |
 
 ## Running them

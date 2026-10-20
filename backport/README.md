@@ -5,9 +5,13 @@
 Sixteen fixes for the vendored cordis line: twelve upstream commits it has not taken, plus four loader defects confirmed present here by the same probes.
 
 The shipped line has moved since these were cut. Against what it ships now
-(`4.0.5` / loader `1.0.6` / timer `1.1.7`) two of the three patches are **already
-applied** — `cordis-4.0.4.patch` and `cordis-plugin-timer-1.1.6.patch` report every
-hunk as already present, which is the expected shape once the line takes them. The
+(`4.0.5` / loader `1.0.6` / timer `1.1.7`) two of the three patches are no longer
+needed, and that was checked by probe rather than by the patch tool alone:
+
+| patch | checked with | result |
+|---|---|---|
+| `cordis-4.0.4.patch` | `fuzz/07`, `fuzz/08`, `fuzz/11`, `probes/02`, `probes/03`, `probes/05-06`, `probes/06-failed-fiber-reentry`, `probes/10`, and the `baseUrl?: string \| undefined` declaration | every behaviour present on `4.0.5` |
+| `cordis-plugin-timer-1.1.6.patch` | `probes/04-interval-waiters` | all waiters settle on `1.1.7` | The
 loader patch did not apply: it was re-cut against `1.0.6` (the vendored `_init()` renamed
 `exports` to `moduleNamespace`, and the two hunks that touch it had to be re-expressed by
 hand). The re-cut patch is verified by running `probes/08` and `probes/09` against it —
@@ -15,9 +19,9 @@ both defects it addresses are gone.
 
 | patch | against | hunks | on the shipped line |
 |---|---|---|---|
-| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 25 | already applied (`4.0.5`) |
+| `cordis-4.0.4.patch` | `@deepseek-ai/cordis@4.0.4` | 25 | not needed on `4.0.5`; every item probe-confirmed |
 | `cordis-plugin-loader-1.0.6.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.6` | 21 | applies cleanly; probe-verified |
-| `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 | already applied (`1.1.7`) |
+| `cordis-plugin-timer-1.1.6.patch` | `@deepseek-ai/cordis-plugin-timer@1.1.6` | 5 | not needed on `1.1.7`; probe-confirmed |
 
 Each patch touches `src/*.ts` **and** `lib/index.js`. The `exports` map resolves to
 the bundle, so changing `src` alone does not change what runs. The `src` half is what

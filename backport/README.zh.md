@@ -5,8 +5,10 @@
 上游已修、但 vendor 这条 cordis 线尚未跟进的 bug，以补丁形式给出。
 
 **装机的这条线已经往前走了**（现为 `4.0.5` / loader `1.0.6` / timer `1.1.7`）：
-`cordis-4.0.4.patch` 与 `cordis-plugin-timer-1.1.6.patch` 的每个 hunk 在新版本上都是
-**already applied**（说明这条线已经收下了它们）；loader 的补丁**不能直接套** —— 已按
+`cordis-4.0.4.patch` 与 `cordis-plugin-timer-1.1.6.patch` 已经**不需要了**，而且不是只看
+`patch` 的 "already applied"——逐项用探针复核过：`fuzz/07`、`fuzz/08`、`fuzz/11`、`probes/02`、
+`probes/03`、`probes/05-06`、`probes/06`、`probes/10`（以及 `baseUrl?: string | undefined`
+的声明）在 `4.0.5` 上全部成立，`probes/04` 在 `1.1.7` 上成立。loader 的补丁**不能直接套** —— 已按
 `1.0.6` 重切（`_init()` 把 `exports` 改名为 `moduleNamespace`，因此有两个 hunk 需要重写）。
 重切后的补丁用 `probes/08` 与 `probes/09` 验证：两条缺陷都不再复现。
 

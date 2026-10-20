@@ -66,6 +66,21 @@ Verified by running `probes/08` and `probes/09` against a copy of the patched 1.
 the group reconcile ends with `["baz"]`, and a vetoed update leaves the entry at its old
 value. Both defects the patch addresses are gone.
 
-The other two patches are now **already applied** on the shipped line: every hunk of
-`cordis-4.0.4.patch` and `cordis-plugin-timer-1.1.6.patch` reports as present against
-`4.0.5` / `1.1.7`.
+The other two patches are no longer needed, and that was checked item by item rather
+than by the patch tool alone:
+
+| item | probe / check | on the shipped line |
+|---|---|---|
+| `eb5604d` logger level | `fuzz/11-warn-visible` | `[info, warn]` reaches the exporter |
+| `be7d36e` + `4cfd19a` shadows | `fuzz/07`, `fuzz/08` | both correct |
+| `988df36` types | `baseUrl?: string \| undefined` in `src/context.ts` | widened |
+| `10194de` FAILED re-entry | `probes/06-failed-fiber-reentry` | not re-entered |
+| `752dbee` wrapper fields | `probes/10-plugin-wrapper-fields` | wrapper and fiber agree |
+| `2ceea23` update task | `probes/02-dropped-failure` | rejects to an awaiter, nothing leaks |
+| `5b195b3` next twice | `probes/03-waterfall-twice` | rejected |
+| `1c1a10e`, `fd96b0a` | `probes/05-06-hooks-and-buffer` | both correct |
+| `cb77029` timer waiters | `probes/04-interval-waiters` | all settle |
+
+One item is **not** on this line: the loader's `_initTask?: Promise<void>` is still not
+widened to `| undefined`. That is part of the loader patch, which the re-cut 1.0.6 version
+does apply.
