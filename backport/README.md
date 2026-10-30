@@ -175,3 +175,10 @@ Scenario ② of `probes/14` depends on the `internal/update` return fix carried 
 `cordis-plugin-loader-1.0.6.patch` (the `config => this.update(config)` hunk), which
 is why the teardown patch is cut against the already-patched loader. Scenario ①
 also passes when it is applied to the raw module.
+
+### legacy/
+
+`legacy/cordis-plugin-loader-1.0.6.patch` was cut against the pre-`dsh-v0.2.1-rc.5`
+loader bundle. That shipment already carries its behaviours: probes 07, 08, 10, 11,
+14 and 17 pass on the installed line, and its `lib/index.js` hunks no longer apply
+because the shipped bundle was rebuilt. It is kept for older lines only.

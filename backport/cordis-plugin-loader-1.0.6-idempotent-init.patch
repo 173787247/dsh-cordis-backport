@@ -1,0 +1,26 @@
+diff --git a/cordis-plugin-loader/lib/index.js b/cordis-plugin-loader/lib/index.js
+index 16d733c..02d636b 100644
+--- a/cordis-plugin-loader/lib/index.js
++++ b/cordis-plugin-loader/lib/index.js
+@@ -457,6 +457,7 @@ var Entry = class Entry {
+ 		this.fiber?.await().then(notify, notify);
+ 	}
+ 	async _init() {
++		if (this.fiber?.uid) return;
+ 		let moduleNamespace;
+ 		try {
+ 			moduleNamespace = await this.parent.tree.import(this.options.name, this.getOuterStack);
+diff --git a/cordis-plugin-loader/src/config/entry.ts b/cordis-plugin-loader/src/config/entry.ts
+index c8dd124..0c16f2f 100644
+--- a/cordis-plugin-loader/src/config/entry.ts
++++ b/cordis-plugin-loader/src/config/entry.ts
+@@ -221,6 +221,9 @@ export class Entry {
+   }
+ 
+   private async _init() {
++    // `init()` may be called again after the plugin has started; the entry is
++    // already running, so importing and applying it again would duplicate it.
++    if (this.fiber?.uid) return
+     let moduleNamespace: unknown
+     try {
+       moduleNamespace = await this.parent.tree.import(this.options.name, this.getOuterStack)
