@@ -83,3 +83,17 @@ Then:
 `01` and `04` also need the matching mock loader in the same directory —
 `mockloader.mjs` for the DSH side, `mockloader-shim.mjs` for upstream. The other
 three are self-contained.
+
+## 2026-10-30 additions: #185, #232–#235
+
+| file | PR | result on DSH 4.0.5 |
+|---|---|---|
+| `12-prepend-update.mjs` | #232 | ★ `internal/update` + `{ prepend: true }` still throws |
+| `13-listener-arg.mjs` | #233 | ✓ runtime argument is already an object; the defect is type-level only |
+| `14-removed-teardown.mjs` | #234 | ★ `await()` returns before the removed entry's teardown |
+| `15b-logger-format.mjs` | #235 | ★ `Logger.format` throws on circular values / Symbol with `%d`; `ctx.logger.info` defers formatting, so it only surfaces once an exporter formats |
+| `16-dispose-order.mjs` + `16b` / `16c` / `16d` | #185 | ✓ all four scenarios already pass on this line (dispose drains never-activated effects, rejects late effects, isolates throwing observers, prevents activation after dispose) |
+| `17-persist-order.mjs` | #165 | ★ a vetoed update still writes `entry.options.config` |
+
+Already covered earlier: `07` (#166 duplicate init), `11` (#167 group cross-race), `10` (#172 colon id) — all still reproduce.
+#168/#170 (`hmr`) are not vendored, so they need no DSH-side probe.
