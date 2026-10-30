@@ -1,0 +1,113 @@
+diff --git a/cordis/lib/index.js b/cordis/lib/index.js
+index 91984e8..a910cbe 100644
+--- a/cordis/lib/index.js
++++ b/cordis/lib/index.js
+@@ -14,6 +14,12 @@ var DisposableList = class {
+ 		this.weak.set(value, sn);
+ 		return () => this.map.delete(sn);
+ 	}
++	unshift(value) {
++		const sn = ++this.sn;
++		this.map = /* @__PURE__ */ new Map([[sn, value], ...this.map]);
++		this.weak.set(value, sn);
++		return () => this.map.delete(sn);
++	}
+ 	delete(value) {
+ 		const sn = this.weak.get(value);
+ 		if (!sn) return false;
+@@ -407,13 +413,29 @@ var EventsService = class {
+ //#endregion
+ //#region lib/types/logger.js
+ /** Built-in placeholder formatters used by `Logger.format()`. */
++function stringify(value) {
++	try {
++		const seen = /* @__PURE__ */ new WeakSet();
++		return JSON.stringify(value, (key, val) => {
++			if (typeof val !== "object" || val === null) return val;
++			if (seen.has(val)) return "[Circular]";
++			seen.add(val);
++			return val;
++		});
++	} catch {
++		return String(value);
++	}
++}
++function toNumber(value) {
++	return typeof value === "symbol" ? NaN : Number(value);
++}
+ const defaultFormatters = {
+ 	s: (value) => String(value),
+-	d: (value) => Math.trunc(Number(value)),
+-	i: (value) => Math.trunc(Number(value)),
+-	f: (value) => Number(value),
+-	o: (value) => JSON.stringify(value),
+-	O: (value) => JSON.stringify(value),
++	d: (value) => Math.trunc(toNumber(value)),
++	i: (value) => Math.trunc(toNumber(value)),
++	f: (value) => toNumber(value),
++	o: (value) => stringify(value),
++	O: (value) => stringify(value),
+ 	c: () => "",
+ 	C: (value, exporter, message) => {
+ 		return Logger.color(exporter, Logger.code(message.name, exporter.colors), value);
+diff --git a/cordis/src/logger.ts b/cordis/src/logger.ts
+index d862a76..fa5e218 100644
+--- a/cordis/src/logger.ts
++++ b/cordis/src/logger.ts
+@@ -47,13 +47,33 @@ export interface Exporter {
+ }
+ 
+ /** Built-in placeholder formatters used by `Logger.format()`. */
++/** JSON without throwing: cycles become `[Circular]`, the rest falls back to `String`. */
++function stringify(value: any) {
++  try {
++    const seen = new WeakSet()
++    return JSON.stringify(value, (key, val) => {
++      if (typeof val !== 'object' || val === null) return val
++      if (seen.has(val)) return '[Circular]'
++      seen.add(val)
++      return val
++    })
++  } catch {
++    return String(value)
++  }
++}
++
++/** `Number(value)` throws on a symbol; its numeric value is not defined, so `NaN`. */
++function toNumber(value: any) {
++  return typeof value === 'symbol' ? NaN : Number(value)
++}
++
+ export const defaultFormatters: Record<string, Formatter> = {
+   s: (value) => String(value),
+-  d: (value) => Math.trunc(Number(value)),
+-  i: (value) => Math.trunc(Number(value)),
+-  f: (value) => Number(value),
+-  o: (value) => JSON.stringify(value),
+-  O: (value) => JSON.stringify(value),
++  d: (value) => Math.trunc(toNumber(value)),
++  i: (value) => Math.trunc(toNumber(value)),
++  f: (value) => toNumber(value),
++  o: (value) => stringify(value),
++  O: (value) => stringify(value),
+   c: () => '',
+   C: (value, exporter, message) => {
+     return Logger.color(exporter, Logger.code(message.name, exporter.colors), value)
+diff --git a/cordis/src/utils.ts b/cordis/src/utils.ts
+index b4b01a1..c2114b4 100644
+--- a/cordis/src/utils.ts
++++ b/cordis/src/utils.ts
+@@ -18,6 +18,13 @@ export class DisposableList<T extends WeakKey> {
+     return () => this.map.delete(sn)
+   }
+ 
++  unshift(value: T) {
++    const sn = ++this.sn
++    this.map = new Map([[sn, value], ...this.map])
++    this.weak.set(value, sn)
++    return () => this.map.delete(sn)
++  }
++
+   delete(value: T) {
+     const sn = this.weak.get(value)
+     if (!sn) return false

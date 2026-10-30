@@ -159,3 +159,19 @@ result is byte-identical to the workspace the before/after numbers came from.
 - **No** `c594d1a` (#121) or `c2835d8` (#123). The include here **deliberately**
   vetoes the fiber restart and persists the config itself — there is a comment
   explaining why. Whether to follow upstream is a product decision.
+
+## 2026-10-30: #232 / #234 / #235
+
+Three of the remaining PRs were confirmed present on the shipped line and are
+carried by two patches. Each was verified by applying it to a copy of the shipped
+module and running the probe before and after.
+
+| patch | against | hunks | probe evidence |
+|---|---|---:|---|
+| `cordis-4.0.5.patch` | `@deepseek-ai/cordis@4.0.5` | 4 | `probes/12-prepend-update` (#232) and `probes/15b-logger-format` (#235); both ★ before, ✓ after |
+| `cordis-plugin-loader-1.0.6-teardown.patch` | `@deepseek-ai/cordis-plugin-loader@1.0.6`, **apply after `cordis-plugin-loader-1.0.6.patch`** | 10 | `probes/14-removed-teardown` scenarios ① and ②; both returned in ~0 ms before, both wait ~51 ms after |
+
+Scenario ② of `probes/14` depends on the `internal/update` return fix carried by
+`cordis-plugin-loader-1.0.6.patch` (the `config => this.update(config)` hunk), which
+is why the teardown patch is cut against the already-patched loader. Scenario ①
+also passes when it is applied to the raw module.

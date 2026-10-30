@@ -1,0 +1,140 @@
+diff --git a/cordis-plugin-loader/lib/index.js b/cordis-plugin-loader/lib/index.js
+index 3ce589b..16d733c 100644
+--- a/cordis-plugin-loader/lib/index.js
++++ b/cordis-plugin-loader/lib/index.js
+@@ -70,10 +70,12 @@ var EntryGroup = class {
+ 	remove(id, isDispose = false) {
+ 		const entry = this.tree.store[id];
+ 		if (!entry) return;
+-		entry.fiber?.dispose();
++		const task = entry.fiber?.dispose();
++		if (task) this.tree.trackDetached(task);
+ 		if (!isDispose) this.unlink(entry.options);
+ 		delete this.tree.store[id];
+ 		this.context.emit("loader/partial-dispose", entry, entry.options, false);
++		return task;
+ 	}
+ 	async update(config) {
+ 		const oldConfig = this.data;
+@@ -84,7 +86,7 @@ var EntryGroup = class {
+ 			...oldMap,
+ 			...newMap
+ 		});
+-		for (const id of ids) if (!newMap[id]) this.remove(id);
++		for (const id of ids) if (!newMap[id]) await this.remove(id);
+ 		for (const id of ids) if (newMap[id]) await this.create(newMap[id]).catch((error) => {
+ 			this.ctx.logger.error(error);
+ 		});
+@@ -125,6 +127,7 @@ var EntryTree = class EntryTree {
+ 	enableLogs;
+ 	root;
+ 	store = Object.create(null);
++	detached = /* @__PURE__ */ new Set();
+ 	constructor(ctx) {
+ 		this.ctx = ctx.extend({ baseUrl: ctx.baseUrl });
+ 		this.root = new EntryGroup(this.ctx, this);
+@@ -144,7 +147,15 @@ var EntryTree = class EntryTree {
+ 	}
+ 	/** Return pending import and lifecycle tasks owned by this tree. */
+ 	getTasks() {
+-		return [...this.entries()].map((entry) => entry._initTask || entry.fiber?.inertia).filter(isNonNullable);
++		return [
++			...[...this.entries()].map((entry) => entry._initTask || entry.fiber?.inertia).filter(isNonNullable),
++			...this.detached
++		];
++	}
++	trackDetached(task) {
++		const tracked = task.catch(() => {
++		}).finally(() => this.detached.delete(tracked));
++		this.detached.add(tracked);
+ 	}
+ 	/** Wait until this tree has no pending import or lifecycle tasks. */
+ 	async await() {
+@@ -190,8 +201,9 @@ var EntryTree = class EntryTree {
+ 	/** Stop and remove an entry from its parent group. */
+ 	remove(id) {
+ 		const entry = this.resolve(id);
+-		entry.parent.remove(id);
++		const task = entry.parent.remove(id);
+ 		entry.parent.tree.write();
++		return task;
+ 	}
+ 	/** Update an entry and optionally move it to another group. */
+ 	async update(id, options, parent, position) {
+diff --git a/cordis-plugin-loader/src/config/group.ts b/cordis-plugin-loader/src/config/group.ts
+index 4403b50..e05850f 100644
+--- a/cordis-plugin-loader/src/config/group.ts
++++ b/cordis-plugin-loader/src/config/group.ts
+@@ -37,12 +37,14 @@ export class EntryGroup {
+   remove(id: string, isDispose = false) {
+     const entry = this.tree.store[id]
+     if (!entry) return
+-    entry.fiber?.dispose()
++    const task = entry.fiber?.dispose()
++    if (task) this.tree.trackDetached(task)
+     if (!isDispose) {
+       this.unlink(entry.options)
+     }
+     delete this.tree.store[id]
+     this.context.emit('loader/partial-dispose', entry, entry.options, false)
++    return task
+   }
+ 
+   async update(config: EntryOptions[]) {
+@@ -57,7 +59,7 @@ export class EntryGroup {
+     // Serial execution prevents a remove from racing with a create of the
+     // same id (e.g. when an entry is moved within the same group).
+     for (const id of ids) {
+-      if (!newMap[id]) this.remove(id)
++      if (!newMap[id]) await this.remove(id)
+     }
+     for (const id of ids) {
+       if (newMap[id]) {
+diff --git a/cordis-plugin-loader/src/config/tree.ts b/cordis-plugin-loader/src/config/tree.ts
+index 5fce93a..f91c38e 100644
+--- a/cordis-plugin-loader/src/config/tree.ts
++++ b/cordis-plugin-loader/src/config/tree.ts
+@@ -11,6 +11,8 @@ export abstract class EntryTree {
+   public enableLogs?: boolean
+   public root: EntryGroup
+   public store: Dict<Entry> = Object.create(null)
++  /** Teardowns of entries already removed from `store`; `entries()` cannot see them. */
++  private detached = new Set<Promise<unknown>>()
+ 
+   constructor(ctx: Context) {
+     this.ctx = ctx.extend({ baseUrl: ctx.baseUrl })
+@@ -34,9 +36,20 @@ export abstract class EntryTree {
+ 
+   /** Return pending import and lifecycle tasks owned by this tree. */
+   getTasks() {
+-    return [...this.entries()]
+-      .map(entry => entry._initTask || entry.fiber?.inertia)
+-      .filter(isNonNullable)
++    return [
++      ...[...this.entries()]
++        .map(entry => entry._initTask || entry.fiber?.inertia)
++        .filter(isNonNullable),
++      ...this.detached,
++    ]
++  }
++
++  /** Keep a removed entry's teardown visible to `await()` until it settles. */
++  trackDetached(task: Promise<unknown>) {
++    const tracked = task
++      .catch(() => {})
++      .finally(() => this.detached.delete(tracked))
++    this.detached.add(tracked)
+   }
+ 
+   /** Wait until this tree has no pending import or lifecycle tasks. */
+@@ -92,8 +105,9 @@ export abstract class EntryTree {
+   /** Stop and remove an entry from its parent group. */
+   remove(id: string) {
+     const entry = this.resolve(id)
+-    entry.parent.remove(id)
++    const task = entry.parent.remove(id)
+     entry.parent.tree.write()
++    return task
+   }
+ 
+   /** Update an entry and optionally move it to another group. */
