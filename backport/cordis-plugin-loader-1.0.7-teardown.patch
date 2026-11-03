@@ -1,0 +1,63 @@
+--- a/cordis-plugin-loader/lib/index.js
++++ b/cordis-plugin-loader/lib/index.js
+@@ -75,9 +75,11 @@
+ 		const entry = this.tree.store[id];
+ 		if (!entry || entry.parent !== this) return;
+ 		delete this.tree.store[id];
+-		entry.fiber?.dispose();
++		const task = entry.fiber?.dispose();
++		if (task) this.tree.trackDetached(task);
+ 		if (!isDispose) this.unlink(entry.options);
+ 		this.context.emit("loader/partial-dispose", entry, entry.options, false);
++		return task;
+ 	}
+ 	async update(config) {
+ 		const oldConfig = this.data;
+@@ -92,7 +94,7 @@
+ 			if (newMap[id]) await this.create(newMap[id]).catch((error) => {
+ 				this.ctx.logger.error(error);
+ 			});
+-			else this.remove(id);
++			else await this.remove(id);
+ 		}));
+ 	}
+ 	stop() {
+@@ -204,6 +206,7 @@
+ 	enableLogs;
+ 	root;
+ 	store = Object.create(null);
++	detached = /* @__PURE__ */ new Set();
+ 	constructor(ctx) {
+ 		this.ctx = ctx.extend({ baseUrl: ctx.baseUrl });
+ 		this.root = new EntryGroup(this.ctx, this);
+@@ -223,7 +226,14 @@
+ 	}
+ 	/** Return pending import and lifecycle tasks owned by this tree. */
+ 	getTasks() {
+-		return [...this.entries()].map((entry) => entry._initTask || entry.fiber?.inertia).filter(isNonNullable);
++		return [
++			...[...this.entries()].map((entry) => entry._initTask || entry.fiber?.inertia).filter(isNonNullable),
++			...this.detached
++		];
++	}
++	trackDetached(task) {
++		const tracked = task.catch(() => {}).finally(() => this.detached.delete(tracked));
++		this.detached.add(tracked);
+ 	}
+ 	/** Wait until this tree has no pending import or lifecycle tasks. */
+ 	async await() {
+@@ -282,12 +292,13 @@
+ 		const entry = this.resolve(id);
+ 		const group = entry.parent;
+ 		const legacy = entry.options;
+-		group.remove(legacy.id);
++		const task = group.remove(legacy.id);
+ 		group.tree.commit({
+ 			id: legacy.id,
+ 			group,
+ 			legacy
+ 		});
++		return task;
+ 	}
+ 	/** Update an entry and optionally move it to another group. */
+ 	async update(id, options, parent, position) {
